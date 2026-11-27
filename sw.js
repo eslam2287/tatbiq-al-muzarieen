@@ -1,7 +1,7 @@
 /* Service Worker — تطبيق المزارعين: يعمل أوفلاين بعد أول زيارة عبر خادم HTTP.
    ملاحظة: Service Worker لا يعمل عند فتح الملف مباشرة file:// — يجب تقديمه عبر خادم. */
-const CACHE = "muzarieen-v1";
-const FILES = ["./", "./index.html", "./manifest.json"];
+const CACHE = "muzarieen-v2";
+const FILES = ["./", "./index.html", "./manifest.json", "./config.js"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).catch(() => {}));
   self.skipWaiting();

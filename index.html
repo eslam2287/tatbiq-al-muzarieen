@@ -45,6 +45,8 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px}
 .topbar button{width:auto;padding:8px 14px;font-size:16px;margin:0}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 </head>
 <body>
 <header>
@@ -60,9 +62,9 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 </div>
 
 <div class="note" id="syncNote">
-  <b>مهم عن المزامنة:</b> هذه النسخة العامة تحفظ بياناتك على هذا الموبايل (أوفلاين أولًا).
-  لنقل بياناتك لموبايل آخر استخدم <b>تصدير / استيراد نسخة احتياطية (JSON)</b> من تبويب «حسابي».
-  المزامنة التلقائية الكاملة بين الأجهزة تحتاج قاعدة بيانات سحابية مجانية — التفاصيل في ملف README.
+  <b>مهم عن المزامنة:</b> بياناتك دلوقتي بتتزامن تلقائي مع السيرفر — نفس الحساب على موبايل تاني هيشوف نفس البيانات.
+  التطبيق بيشتغل أوفلاين كمان، وبيحفظ على الموبايل لحد ما النت يرجع ويتزامن.
+  تقدر برضه تعمل <b>تصدير / استيراد نسخة احتياطية (JSON)</b> من تبويب «حسابي».
 </div>
 
 <!-- ===== تسجيل الدخول ===== -->
@@ -345,7 +347,194 @@ const SYMPTOMS = ["اصفرار الأوراق","بقع على الورقة","ب
 /* ===== التخزين والحسابات ===== */
 function emptyDB(){return {users:[],plantings:[],logs:[],sales:[],diagnoses:[],questions:[],supervision:{open:false},cropEdits:{},labels:{},created:new Date().toISOString()};}
 function loadDB(){try{const d=JSON.parse(localStorage.getItem(DB_KEY));if(!d||!d.users)return emptyDB();if(!d.labels)d.labels={};if(!d.cropEdits)d.cropEdits={};if(!d.sales)d.sales=[];if(!d.questions)d.questions=[];if(!d.supervision||typeof d.supervision.open!=="boolean")d.supervision={open:false};d.users.forEach(normUser);return d;}catch(e){return emptyDB();}}
-function saveDB(db){localStorage.setItem(DB_KEY,JSON.stringify(db));}
+function saveLocal(db){localStorage.setItem(DB_KEY,JSON.stringify(db));}
+function saveDB(db){saveLocal(db);schedulePush();}
+/* ================= المزامنة مع Supabase (تلقائية بين الموبايلات) =================
+   كيف تعمل:
+   - localStorage يبقى المخزن المحلي (أوفلاين أولًا) — التطبيق يعمل بدونه نت كما قبل.
+   - عند كل حفظ، تُدفع نسخة من البيانات إلى Supabase في الخلفية (بدون انتظار).
+   - عند الدخول وعند عودة النت، يُسحب أحدث نسخة من Supabase وتُدمج مع المحلي.
+   - المزارع يدفع ويسحب صفوفه فقط (owner_id = اسم مستخدمه)؛ الأدمن يدفع ويسحب الكل.
+   - إن كان السيرفر غير متاح (الجداول غير مفعّلة بعد، أو لا يوجد نت) تفشل
+     المزامنة بصمت ويبقى التطبيق شغالًا على البيانات المحلية.
+   - حدود معروفة في هذه المرحلة: حقول نهاية الموسم (الإنتاجية الفعلية وسعر
+     البيع وإغلاق الموسم) وعلامة الصورة في التشخيص ليست لها أعمدة في جداول
+     Supabase، فتُحفظ محليًا فقط وتُستعاد من النسخة المحلية عند الدمج.
+     كلمات السر ما زالت SHA-256 محلية حتى النقل إلى Supabase Auth. */
+if(!window.MZR_CONFIG||!window.MZR_CONFIG.supabaseUrl){
+  window.MZR_CONFIG={supabaseUrl:"https://pgdvetwwwvzhczruzixu.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnZHZldHd3d3Z6aGN6cnV6aXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU3NDI5MDMsImV4cCI6MjExMTMxODkwM30.fFAhHkIm_EKPNZrdOb-yEbtvr7hwy0wXf4aacod-kTQ"};
+}
+const SB_CONFIG=window.MZR_CONFIG;
+const SB_CDN_URL="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+let sbClient=null, sbLibPromise=null, sbOnline=false, sbPushTimer=null;
+function ensureSbLib(){
+  if(window.supabase&&window.supabase.createClient)return Promise.resolve(true);
+  if(sbLibPromise)return sbLibPromise;
+  sbLibPromise=new Promise(function(resolve){
+    try{
+      const s=document.createElement("script");
+      s.src=SB_CDN_URL;
+      s.onload=function(){resolve(!!(window.supabase&&window.supabase.createClient));};
+      s.onerror=function(){resolve(false);};
+      document.head.appendChild(s);
+      setTimeout(function(){resolve(!!(window.supabase&&window.supabase.createClient));},8000);
+    }catch(e){resolve(false);}
+  });
+  return sbLibPromise;
+}
+async function sb(){
+  if(sbClient)return sbClient;
+  const ok=await ensureSbLib();
+  if(!ok)return null;
+  try{sbClient=window.supabase.createClient(SB_CONFIG.supabaseUrl,SB_CONFIG.supabaseAnonKey);}
+  catch(e){return null;}
+  return sbClient;
+}
+function withTimeout(promise,ms){return Promise.race([promise,new Promise(function(res){setTimeout(function(){res({data:null,error:{message:"timeout"}});},ms);})]);}
+/* ===== تحويل بين شكل التطبيق المحلي وصفوف Supabase (دوال نقية قابلة للاختبار) ===== */
+function userToRow(u){return {id:u.username,username:u.username,pass_hash:u.pass,role:u.role||"farmer",status:u.status||"approved",plan:u.plan||"free",monthly_fee:(u.monthlyFee==null?null:u.monthlyFee),paid_until:u.paidUntil||null,requested_at:u.requestedAt||null,created_at:u.created||new Date().toISOString()};}
+function rowToUser(r){return normUser({username:r.username,pass:r.pass_hash,role:r.role||"farmer",status:r.status||"approved",plan:r.plan||"free",monthlyFee:(r.monthly_fee==null?null:Number(r.monthly_fee)),paidUntil:r.paid_until||null,requestedAt:r.requested_at||null,created:r.created_at||null});}
+function plantingToRow(p){return {id:p.id,owner_id:p.owner,owner_name:p.owner,crop:p.cropId,variety:p.variety||null,governorate:p.gov||null,soil:p.soil||null,irrigation:p.irr||null,area_value:(p.areaValue==null?null:p.areaValue),area_unit:(p.areaUnit==="قيراط"||p.areaUnit==="فدان")?p.areaUnit:null,area_feddan:areaFeddan(p),planting_date:p.date||null,custom_crop_name:p.customCropName||null,custom_crop_desc:p.customCropDesc||null,custom_plan:p.customCropPlan||null,search_link:p.customSearchUrl||null,created_at:p.created||new Date().toISOString()};}
+function rowToPlanting(r,keep){return {id:r.id,owner:r.owner_id,cropId:r.crop,customCropName:r.custom_crop_name||"",customCropDesc:r.custom_crop_desc||"",customCropPlan:r.custom_plan||"",customSearchUrl:r.search_link||"",variety:r.variety||"",gov:r.governorate||"",soil:r.soil||"",irr:r.irrigation||"",areaValue:(r.area_value==null?null:Number(r.area_value)),areaUnit:r.area_unit||"لا أعلم",date:r.planting_date||"",yieldActual:(keep?keep.yieldActual:null),yieldUnit:(keep?keep.yieldUnit:""),salePrice:(keep?keep.salePrice:null),closed:(keep?!!keep.closed:false),created:r.created_at||(keep?keep.created:new Date().toISOString())};}
+function logToRow(l,owner){return {id:l.id,planting_id:l.plantingId,owner_id:owner||null,action:l.type,log_date:l.date||null,op_cost:logOpCost(l),labor_cost:logLaborCost(l),note:l.note||null};}
+function rowToLog(r){return {id:r.id,plantingId:r.planting_id,type:r.action,opCost:Number(r.op_cost||0),laborCost:Number(r.labor_cost||0),cost:Number(r.op_cost||0)+Number(r.labor_cost||0),note:r.note||"",date:r.log_date||""};}
+function saleToRow(s,owner){return {id:s.id,planting_id:s.plantingId,owner_id:owner||null,quantity:(s.qty==null?null:s.qty),quantity_unit:s.qtyUnit||null,amount:Number(s.value||0),note:s.note||null,sale_date:s.date||null};}
+function rowToSale(r){return {id:r.id,plantingId:r.planting_id,qty:(r.quantity==null?null:Number(r.quantity)),qtyUnit:r.quantity_unit||"",value:Number(r.amount||0),note:r.note||"",date:r.sale_date||""};}
+function diagToRow(d){return {id:d.id,owner_id:d.owner,planting_id:null,symptoms:d.text||"",result:d.result||"",photo_url:null};}
+function rowToDiag(r,keep){return {id:r.id,owner:r.owner_id,cropId:(keep?keep.cropId:""),text:r.symptoms||"",result:r.result||"",photo:(keep?!!keep.photo:false),date:r.created_at||(keep?keep.date:"") };}
+function questionToRow(q){return {id:q.id,owner_id:q.asker,asker_name:q.asker,title:null,question:q.text,answer:q.answer||null,answered_by:q.answeredBy||null};}
+function rowToQuestion(r){return {id:r.id,asker:r.asker_name||r.owner_id,text:r.question,answer:r.answer||null,answeredBy:r.answered_by||null,date:r.created_at||""};}
+function cropEditToRow(k,e){return {crop_id:k,program:{fert:e.fert||"",date:e.date||null},source:e.source||null};}
+function cropEditFromRow(r){const p=r.program||{};return {fert:p.fert||"",source:r.source||"",date:p.date||""};}
+function supervisionToRow(s){return {id:1,open:!!(s&&s.open)};}
+function mergeById(local,cloud){const m=new Map();(local||[]).forEach(function(x){m.set(x.id,x);});(cloud||[]).forEach(function(x){if(m.has(x.id))m.set(x.id,Object.assign({},m.get(x.id),x));else m.set(x.id,x);});return Array.from(m.values());}
+function mergeUsers(local,cloud){const m=new Map();(local||[]).forEach(function(u){m.set(u.username,u);});(cloud||[]).forEach(function(cu){const ex=m.get(cu.username);m.set(cu.username,ex?Object.assign({},ex,cu):cu);});return Array.from(m.values());}
+/* ===== محرك المزامنة: جلب/دفع/حذف ===== */
+async function sbFetch(table,filter){
+  const c=await sb();if(!c)return null;
+  try{
+    let q=c.from(table).select("*");
+    if(filter)q=q.eq(filter.col,filter.val);
+    const res=await withTimeout(q,8000);
+    if(res.error||!res.data)return null;
+    return res.data;
+  }catch(e){return null;}
+}
+async function sbUpsert(table,rows){
+  if(!rows||!rows.length)return false;
+  const c=await sb();if(!c)return false;
+  try{const res=await withTimeout(c.from(table).upsert(rows),8000);return !res.error;}
+  catch(e){return false;}
+}
+async function sbDeleteRow(table,keyField,value){
+  const c=await sb();if(!c)return false;
+  try{const res=await withTimeout(c.from(table).delete().eq(keyField,value),8000);return !res.error;}
+  catch(e){return false;}
+}
+async function syncKeyedTable(table,rows,keyField){
+  const up=await sbUpsert(table,rows);
+  if(!up)return false;
+  try{
+    const existing=await sbFetch(table);
+    if(existing){
+      for(const r of existing){
+        const k=r[keyField];
+        if(!rows.some(function(x){return x[keyField]===k;}))await sbDeleteRow(table,keyField,k);
+      }
+    }
+  }catch(e){}
+  return true;
+}
+async function cloudFetchUsers(){
+  const rows=await sbFetch("users");
+  if(!rows)return null;
+  return rows.map(rowToUser);
+}
+async function pullUsers(){
+  try{
+    const us=await cloudFetchUsers();
+    if(us&&us.length){DB.users=mergeUsers(DB.users,us);DB.users.forEach(normUser);saveLocal(DB);return true;}
+  }catch(e){}
+  return false;
+}
+/* سحب أحدث نسخة من السيرفر ودمجها مع المحلي (السيرفر يفوز في الحقول
+   المشتركة، والمحلي يحتفظ بحقوله الخاصة غير الموجودة في الجداول). */
+async function syncFromCloud(){
+  const c=await sb();
+  if(!c||!navigator.onLine)return false;
+  const u=currentUser();
+  const isAdmin=!!(u&&u.role==="admin");
+  let anyOk=false;
+  try{
+    const usersRows=await sbFetch("users",isAdmin?null:(u?{col:"username",val:u.username}:null));
+    if(usersRows){DB.users=mergeUsers(DB.users,usersRows.map(rowToUser));DB.users.forEach(normUser);anyOk=true;}
+    const pRows=await sbFetch("plantings",isAdmin?null:(u?{col:"owner_id",val:u.username}:null));
+    if(pRows){const mapped=pRows.map(function(r){return rowToPlanting(r,DB.plantings.find(function(x){return x.id===r.id;}));});DB.plantings=mergeById(DB.plantings,mapped);anyOk=true;}
+    const lRows=await sbFetch("logs",isAdmin?null:(u?{col:"owner_id",val:u.username}:null));
+    if(lRows){DB.logs=mergeById(DB.logs,lRows.map(rowToLog));anyOk=true;}
+    const sRows=await sbFetch("sales",isAdmin?null:(u?{col:"owner_id",val:u.username}:null));
+    if(sRows){if(!DB.sales)DB.sales=[];DB.sales=mergeById(DB.sales,sRows.map(rowToSale));anyOk=true;}
+    const dRows=await sbFetch("diagnoses",isAdmin?null:(u?{col:"owner_id",val:u.username}:null));
+    if(dRows){DB.diagnoses=mergeById(DB.diagnoses,dRows.map(function(r){return rowToDiag(r,DB.diagnoses.find(function(x){return x.id===r.id;}));}));anyOk=true;}
+    const qRows=await sbFetch("questions");
+    if(qRows){if(!DB.questions)DB.questions=[];DB.questions=mergeById(DB.questions,qRows.map(rowToQuestion));anyOk=true;}
+    const ceRows=await sbFetch("crop_edits");
+    if(ceRows){ceRows.forEach(function(r){const v=cropEditFromRow(r);if(v)DB.cropEdits[r.crop_id]=v;});anyOk=true;}
+    const lbRows=await sbFetch("labels");
+    if(lbRows){if(!DB.labels)DB.labels={};lbRows.forEach(function(r){DB.labels[r.key]=r.value;});anyOk=true;}
+    const svRows=await sbFetch("supervision");
+    if(svRows&&svRows.length){DB.supervision={open:!!svRows[0].open};anyOk=true;}
+  }catch(e){return anyOk;}
+  if(anyOk){saveLocal(DB);sbOnline=true;updateNetstat();}
+  return anyOk;
+}
+/* دفع نسخة من البيانات المحلية إلى السيرفر (في الخلفية، بلا انتظار).
+   المزارع يدفع صفوفه فقط؛ الأدمن يدفع الكل بما فيه المسميات وتعديلات
+   المحاصيل وحالة الإشراف. */
+async function pushToCloud(db){
+  const c=await sb();
+  if(!c||!db||!db.users)return false;
+  const u=currentUser();
+  const isAdmin=!!(u&&u.role==="admin");
+  const me=u?u.username:null;
+  let ok=false;
+  try{
+    const ownerOf={};
+    (db.plantings||[]).forEach(function(p){ownerOf[p.id]=p.owner;});
+    if(await sbUpsert("users",(db.users||[]).filter(function(x){return isAdmin||x.username===me;}).map(userToRow)))ok=true;
+    if(await sbUpsert("plantings",(db.plantings||[]).filter(function(p){return isAdmin||p.owner===me;}).map(plantingToRow)))ok=true;
+    if(await sbUpsert("logs",(db.logs||[]).filter(function(l){return ownerOf[l.plantingId]&&(isAdmin||ownerOf[l.plantingId]===me);}).map(function(l){return logToRow(l,ownerOf[l.plantingId]);})))ok=true;
+    if(await sbUpsert("sales",(db.sales||[]).filter(function(s){return ownerOf[s.plantingId]&&(isAdmin||ownerOf[s.plantingId]===me);}).map(function(s){return saleToRow(s,ownerOf[s.plantingId]);})))ok=true;
+    if(await sbUpsert("diagnoses",(db.diagnoses||[]).filter(function(d){return isAdmin||d.owner===me;}).map(diagToRow)))ok=true;
+    if(await sbUpsert("questions",(db.questions||[]).filter(function(q){return isAdmin||q.asker===me;}).map(questionToRow)))ok=true;
+    if(isAdmin){
+      const ceRows=Object.keys(db.cropEdits||{}).map(function(k){return cropEditToRow(k,db.cropEdits[k]);});
+      if(await syncKeyedTable("crop_edits",ceRows,"crop_id"))ok=true;
+      const lbRows=Object.keys(db.labels||{}).map(function(k){return {key:k,value:db.labels[k]};});
+      if(await syncKeyedTable("labels",lbRows,"key"))ok=true;
+      if(await sbUpsert("supervision",[supervisionToRow(db.supervision)]))ok=true;
+    }
+  }catch(e){return ok;}
+  if(ok){sbOnline=true;updateNetstat();}
+  return ok;
+}
+function schedulePush(){
+  try{if(sbPushTimer)clearTimeout(sbPushTimer);}catch(e){}
+  sbPushTimer=setTimeout(function(){pushToCloud(DB).catch(function(){});},800);
+}
+function updateNetstat(){
+  const n=document.getElementById("netstat");if(!n)return;
+  if(!navigator.onLine){n.textContent="● أوفلاين (البيانات محفوظة على الجهاز)";return;}
+  n.textContent=sbOnline?"● متصل ✓ متزامن مع السيرفر":"● متصل — السيرفر غير متاح (البيانات على الجهاز)";
+}
+/* عند الفتح: اسحب المستخدمين من السيرفر أولًا (حتى يعرف موبايل جديد
+   الحسابات الموجودة ويدخل بها)، ثم اعرض شاشة الدخول أو التطبيق. */
+async function bootSync(){
+  await pullUsers().catch(function(){});
+  refreshAuth();
+  if(currentUser())enterApp();
+  updateNetstat();
+}
 /* ===== الاشتراكات: مجاني أو مدفوع شهريًا =====
    كل مستخدم له: plan ("free" أو "paid")، monthlyFee (جنيه/شهر يحدده الأدمن)،
    paidUntil (تاريخ "مدفوع حتى" YYYY-MM-DD يُسجَّل عند الدفع).
@@ -454,11 +643,14 @@ function refreshAuth(){
 async function setupAdmin(){
   const u=document.getElementById("setupUser").value.trim(),p=document.getElementById("setupPass").value;
   if(u.length<3||p.length<4){alert("اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.");return;}
+  await pullUsers();
+  if(DB.users.length){alert("يوجد حسابات بالفعل على السيرفر — سجّل الدخول بحساب الأدمن الموجود.");refreshAuth();return;}
   DB.users.push({username:u,pass:await sha256(p),role:"admin",plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});
   saveDB(DB);sessionStorage.setItem(SESSION_KEY,JSON.stringify({username:u}));enterApp();
 }
 async function login(){
   const u=document.getElementById("loginUser").value.trim(),p=document.getElementById("loginPass").value;
+  await pullUsers();
   const user=DB.users.find(x=>x.username===u);
   if(!user||user.pass!==await sha256(p)){document.getElementById("loginErr").textContent="اسم المستخدم أو كلمة السر غير صحيحة.";return;}
   if(user.status==="pending"){document.getElementById("loginErr").textContent="حسابك لسه في انتظار موافقة الأدمن — جرّب تاني بعد ما يوافق.";return;}
@@ -469,6 +661,7 @@ async function registerUser(){
   const name=document.getElementById("regUser").value.trim(),pass=document.getElementById("regPass").value;
   const msg=document.getElementById("regMsg");
   if(name.length<3||pass.length<4){msg.style.color="#8a1f1f";msg.textContent="اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.";return;}
+  await pullUsers();
   if(DB.users.some(x=>x.username===name)){msg.style.color="#8a1f1f";msg.textContent="اسم المستخدم ده موجود بالفعل — جرّب اسم تاني.";return;}
   if(DB.users.length>=MAX_USERS){msg.style.color="#8a1f1f";msg.textContent="وصل التطبيق للحد الأقصى ("+MAX_USERS+" مستخدم) — تواصل مع الأدمن.";return;}
   DB.users.push({username:name,pass:await sha256(pass),role:"farmer",plan:"free",monthlyFee:null,paidUntil:null,status:"pending",requestedAt:new Date().toISOString(),created:new Date().toISOString()});
@@ -564,9 +757,10 @@ function enterApp(){
   document.getElementById("topbar").style.display="flex";
   document.getElementById("bottomnav").style.display="flex";
   document.getElementById("whoami").textContent="👤 "+u.username+" — "+roleName(u.role);
-  document.getElementById("netstat").textContent=navigator.onLine?"● متصل":"● أوفلاين (البيانات محفوظة على الجهاز)";
+  updateNetstat();
   initForms();renderAll();updateSubBanner();
   if(u.role!=="admin"&&!subActive(u))showTab("account");
+  syncFromCloud().then(function(ok){if(ok){renderAll();updateSubBanner();updateNetstat();}});
 }
 function showTab(t){
   const _su=currentUser();
@@ -862,7 +1056,7 @@ async function resetPass(name){
 function deleteUser(name){
   const u=currentUser();if(name===u.username){alert("لا يمكنك حذف حسابك.");return;}
   if(!confirm("حذف المستخدم "+name+"؟ ستبقى زراعاته ظاهرة للأدمن."))return;
-  DB.users=DB.users.filter(x=>x.username!==name);saveDB(DB);renderAccount();
+  DB.users=DB.users.filter(x=>x.username!==name);saveDB(DB);sbDeleteRow("users","id",name);renderAccount();
 }
 function loadCropEdit(){
   const c=cropById(document.getElementById("edCrop").value);
@@ -906,11 +1100,11 @@ function importBackup(ev){
   }catch(e){alert("تعذّرت قراءة الملف.");}};
   r.readAsText(f);
 }
-window.addEventListener("online",()=>{const n=document.getElementById("netstat");if(n)n.textContent="● متصل";});
-window.addEventListener("offline",()=>{const n=document.getElementById("netstat");if(n)n.textContent="● أوفلاين (البيانات محفوظة على الجهاز)";});
+window.addEventListener("online",()=>{updateNetstat();syncFromCloud().then(function(ok){if(ok){renderAll();updateSubBanner();}});pushToCloud(DB).catch(function(){});});
+window.addEventListener("offline",()=>{updateNetstat();});
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}
 refreshAuth();
-if(currentUser())enterApp();
+bootSync();
 </script>
 </body>
 </html>
