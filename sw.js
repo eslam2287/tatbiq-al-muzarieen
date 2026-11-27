@@ -3,7 +3,7 @@
    مهم: عند أي تعديل جديد في التطبيق، غيّر رقم CACHE هنا (v3، v4...) حتى يمسح
    المتصفح النسخة القديمة المخزنة ويجيب الجديدة. صفحات التطبيق نفسها تُجلب
    من الشبكة أولًا (network-first) حتى لا تظهر نسخة قديمة، وباقي الملفات من الكاش. */
-const CACHE = "muzarieen-v4";
+const CACHE = "muzarieen-v5";
 const FILES = ["./", "./index.html", "./manifest.json", "./config.js"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).catch(() => {}));

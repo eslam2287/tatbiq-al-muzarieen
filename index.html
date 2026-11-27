@@ -10,41 +10,41 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
 <style>
 *{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;background:#f2f7f0;color:#16241a;margin:0;font-size:19px;line-height:1.6}
-header{background:#1b6b2e;color:#fff;padding:16px 14px 12px;text-align:center}
-header h1{margin:0;font-size:30px}
+body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;background:#f2f7f0;color:#16241a;margin:0;font-size:18px;line-height:1.55}
+header{background:#1b6b2e;color:#fff;padding:14px 14px 10px;text-align:center}
+header h1{margin:0;font-size:28px}
 header p{margin:4px 0 0;font-size:16px;opacity:.92}
 .wrap{max-width:760px;margin:0 auto;padding:12px 12px 90px}
 .card{background:#fff;border:1px solid #d8e5d3;border-radius:14px;padding:16px;margin:12px 0}
-h2{font-size:23px;margin:0 0 10px}
-h3{font-size:20px;margin:14px 0 6px}
-label{display:block;font-weight:700;margin:12px 0 4px;font-size:18px}
-input,select,textarea{width:100%;padding:14px;font-size:19px;border:2px solid #b9cdb2;border-radius:12px;background:#fff}
+h2{font-size:22px;margin:0 0 10px}
+h3{font-size:19px;margin:14px 0 6px}
+label{display:block;font-weight:700;margin:12px 0 4px;font-size:17px}
+input,select,textarea{width:100%;padding:12px;font-size:18px;border:2px solid #b9cdb2;border-radius:12px;background:#fff}
 textarea{min-height:90px}
-button{width:100%;padding:16px;font-size:20px;font-weight:700;border:0;border-radius:14px;background:#1b6b2e;color:#fff;margin:8px 0;cursor:pointer}
+button{width:100%;padding:14px;font-size:19px;font-weight:700;border:0;border-radius:14px;background:#1b6b2e;color:#fff;margin:8px 0;cursor:pointer}
 button.secondary{background:#e8f0e4;color:#1b6b2e;border:2px solid #1b6b2e}
 button.warn{background:#8a1f1f}
-button.small{width:auto;padding:10px 16px;font-size:17px;margin:4px}
+button.small{width:auto;padding:9px 15px;font-size:16px;margin:4px}
 .row{display:flex;gap:10px}.row>*{flex:1}
-.badge{display:inline-block;background:#e3f2dc;color:#1b6b2e;border-radius:20px;padding:4px 12px;font-size:15px;margin:2px}
+.badge{display:inline-block;background:#e3f2dc;color:#1b6b2e;border-radius:20px;padding:4px 12px;font-size:14px;margin:2px}
 .badge.red{background:#fbe3e3;color:#8a1f1f}
 .badge.grey{background:#eee;color:#444}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #1b6b2e;display:flex;z-index:10}
-nav button{flex:1;background:#fff;color:#1b6b2e;border-radius:0;margin:0;padding:12px 1px;font-size:15px}
+nav button{flex:1;background:#fff;color:#1b6b2e;border-radius:0;margin:0;padding:11px 1px;font-size:14px}
 details{margin:12px 0}
-details summary{font-weight:700;font-size:20px;cursor:pointer;padding:8px 0}
+details summary{font-weight:700;font-size:19px;cursor:pointer;padding:8px 0}
 nav button.active{background:#1b6b2e;color:#fff}
 .hidden{display:none!important}
-.note{background:#fff8d6;border:1px solid #e3c84b;border-radius:12px;padding:12px;margin:12px 0;font-size:17px}
-.warnbox{background:#fdecea;border:1px solid #d99;border-radius:12px;padding:12px;margin:12px 0;font-size:17px}
-table{width:100%;border-collapse:collapse;font-size:17px}
+.note{background:#fff8d6;border:1px solid #e3c84b;border-radius:12px;padding:12px;margin:12px 0;font-size:16px}
+.warnbox{background:#fdecea;border:1px solid #d99;border-radius:12px;padding:12px;margin:12px 0;font-size:16px}
+table{width:100%;border-collapse:collapse;font-size:16px}
 td,th{border:1px solid #ddd;padding:8px;text-align:right;vertical-align:top}
 .plant{border:2px solid #cfe3c6;border-radius:12px;padding:12px;margin:10px 0;background:#fbfff8}
-.total{font-size:24px;font-weight:800}
+.total{font-size:22px;font-weight:800}
 img.preview{max-width:100%;border-radius:12px;margin-top:8px}
-.chip{display:inline-block;border:2px solid #1b6b2e;border-radius:20px;padding:8px 14px;margin:4px;font-size:17px;background:#fff;cursor:pointer}
+.chip{display:inline-block;border:2px solid #1b6b2e;border-radius:20px;padding:8px 14px;margin:4px;font-size:16px;background:#fff;cursor:pointer}
 .chip.on{background:#1b6b2e;color:#fff}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px}
 .topbar button{width:auto;padding:8px 14px;font-size:16px;margin:0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -64,9 +64,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 </div>
 
 <div class="note" id="syncNote">
-  <b>مهم عن المزامنة:</b> بياناتك دلوقتي بتتزامن تلقائي مع السيرفر — نفس الحساب على موبايل تاني هيشوف نفس البيانات.
-  التطبيق بيشتغل أوفلاين كمان، وبيحفظ على الموبايل لحد ما النت يرجع ويتزامن.
-  تقدر برضه تعمل <b>تصدير / استيراد نسخة احتياطية (JSON)</b> من تبويب «حسابي».
+  <b>مزامنة تلقائية:</b> بياناتك بتتزامن مع السيرفر، وبيشتغل أوفلاين كمان.
 </div>
 
 <!-- ===== تسجيل الدخول ===== -->
@@ -154,11 +152,13 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
   <section id="tab-plans" class="hidden">
     <div class="card">
       <h2 id="lblPlans">خطط تسميد</h2>
-      <div class="note" style="font-size:17px">اختار المحافظة والمحصول والصنف، والخطة اللي هتظهر هتبقى على حسب اختياراتك — الخطط دي لكل محافظات مصر، مش المنوفية بس. ولو عايز تشوف كل الخطط، سيب الاختيارات على «كل المحافظات» و«كل المحاصيل».</div>
-      <label>المحافظة</label><select id="planGov" onchange="renderCrops()"></select>
-      <label>المحصول</label><select id="planCrop" onchange="onPlanCropChange()"></select>
-      <label>الصنف / التقاوي</label><select id="planVariety" onchange="renderCrops()"></select>
-      <input id="cropSearch" placeholder="ابحث: قمح، قلقاس، ذرة..." oninput="renderCrops()">
+      <div class="note" style="font-size:16px">اختار المحافظة والمحصول والصنف وطريقة الري، وبعدين دوس «بحث» — والخطة اللي هتظهر هتبقى على حسب اختياراتك.</div>
+      <label>المحافظة</label><select id="planGov"></select>
+      <label>المحصول</label><select id="planCrop" onchange="fillPlanVarieties()"></select>
+      <label>الصنف / التقاوي</label><select id="planVariety"></select>
+      <label>طريقة الري</label><select id="planIrr"><option>كل طرق الري</option><option>غمر</option><option>تنقيط</option><option>رش</option><option>محوري</option><option>لا أعلم</option></select>
+      <input id="cropSearch" placeholder="ابحث: قمح، قلقاس، ذرة...">
+      <button onclick="doPlanSearch()">🔍 بحث عن خطة التسميد</button>
       <div id="cropList"></div>
     </div>
   </section>
@@ -1014,8 +1014,9 @@ function fillPlanVarieties(){
   opts=opts.concat(["لا أعلم","غير ذلك"]);
   v.innerHTML=opts.map(x=>"<option>"+esc(x)+"</option>").join("");
 }
-function onPlanCropChange(){fillPlanVarieties();renderCrops();}
+function doPlanSearch(){window.__plansSearched=true;renderCrops();}
 function renderCrops(){
+  if(!window.__plansSearched){document.getElementById("cropList").innerHTML="<p>اختار المحافظة والمحصول والصنف وطريقة الري من فوق، وبعدين دوس «بحث».</p>";return;}
   const q=(document.getElementById("cropSearch").value||"").trim();
   const govEl=document.getElementById("planGov");
   const cropEl=document.getElementById("planCrop");
@@ -1023,9 +1024,12 @@ function renderCrops(){
   const gov=govEl?govEl.value:"كل المحافظات";
   const cropSel=cropEl?cropEl.value:"all";
   const varSel=varEl?varEl.value:"كل الأصناف";
+  const irrEl=document.getElementById("planIrr");
+  const irr=irrEl?irrEl.value:"كل طرق الري";
   let list=CROPS.filter(c=>!q||c.name.includes(q));
   if(gov&&gov!=="كل المحافظات")list=list.filter(c=>(c.gov||"").includes(gov)||(c.gov||"").includes("كل الجمهورية"));
   if(cropSel&&cropSel!=="all")list=list.filter(c=>c.id===cropSel);
+  if(irr&&irr!=="كل طرق الري"&&irr!=="لا أعلم")list=list.filter(c=>(c.irrigation||"").includes(irr));
   list=list.slice().sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
   document.getElementById("cropList").innerHTML=list.map(c=>{
     const edit=DB.cropEdits[c.id];
