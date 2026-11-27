@@ -30,7 +30,9 @@ button.small{width:auto;padding:10px 16px;font-size:17px;margin:4px}
 .badge.red{background:#fbe3e3;color:#8a1f1f}
 .badge.grey{background:#eee;color:#444}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #1b6b2e;display:flex;z-index:10}
-nav button{flex:1;background:#fff;color:#1b6b2e;border-radius:0;margin:0;padding:13px 2px;font-size:17px}
+nav button{flex:1;background:#fff;color:#1b6b2e;border-radius:0;margin:0;padding:12px 1px;font-size:15px}
+details{margin:12px 0}
+details summary{font-weight:700;font-size:20px;cursor:pointer;padding:8px 0}
 nav button.active{background:#1b6b2e;color:#fff}
 .hidden{display:none!important}
 .note{background:#fff8d6;border:1px solid #e3c84b;border-radius:12px;padding:12px;margin:12px 0;font-size:17px}
@@ -73,6 +75,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
   <div id="setupBox" class="hidden">
     <div class="note">أول مرة تفتح التطبيق: أنشئ حساب <b>الأدمن</b> (أنت). احفظ اسم المستخدم وكلمة السر جيدًا — الأدمن هو الذي يضيف باقي المزارعين.</div>
     <label>اسم مستخدم الأدمن</label><input id="setupUser" autocomplete="username">
+    <label>الاسم (هيظهر للناس بدل اسم المستخدم)</label><input id="setupName" placeholder="مثال: إسلام">
     <label>كلمة السر</label><input id="setupPass" type="password" autocomplete="new-password">
     <button id="btnSetupAdmin" onclick="setupAdmin()">إنشاء حساب الأدمن</button>
   </div>
@@ -85,6 +88,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
     <div id="registerBox" class="hidden" style="border-top:2px dashed #b9cdb2;margin-top:12px;padding-top:12px">
       <div class="note">أي حد معاه اللينك يقدر يعمل حساب بنفسه — بس الحساب مش هيدخل لحد ما الأدمن يوافق عليه.</div>
       <label>اسم مستخدم جديد</label><input id="regUser" autocomplete="username">
+      <label>الاسم (هيظهر للناس بدل اسم المستخدم)</label><input id="regName" placeholder="مثال: أحمد محمد">
       <label>كلمة السر</label><input id="regPass" type="password" autocomplete="new-password">
       <button class="secondary" onclick="registerUser()">إرسال طلب إنشاء الحساب</button>
       <div id="regMsg" style="font-weight:700"></div>
@@ -97,14 +101,10 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 <div id="app" class="hidden">
   <div id="subBanner" class="warnbox hidden" style="margin:10px"></div>
 
-  <!-- زرعاتي -->
-  <section id="tab-plantings">
-    <div class="card">
-      <h2 id="lblMyPlantings">زرعاتي</h2>
-      <div>إجمالي ما صرفته حتى الآن: <span class="total" id="myTotal">0 جنيه</span></div>
-      <button id="btnNewPlanting" onclick="showNewPlanting()">+ سجّل زرعة جديدة</button>
-    </div>
-    <div id="newPlanting" class="card hidden">
+  <!-- إضافة زراعة -->
+  <section id="tab-add">
+    <div id="newPlanting" class="card">
+      <h2 id="lblAddPlanting">إضافة زراعة</h2>
       <h3 id="lblNewPlanting">زرعة جديدة</h3>
       <label>المحافظة * <button type="button" class="small secondary" onclick="setField('npGov','لا أعلم')">لا أعلم</button></label>
       <select id="npGov" onchange="toggleCustom('npGov','customGovBox');suggestSoil()"></select>
@@ -137,15 +137,27 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
       <div style="font-size:16px;color:#555">الفدان = 24 قيراط. مثال: 12 قيراط = 0.5 فدان. التسميد والتكلفة والإنتاجية تُحسب بالفدان.</div>
       <label>تاريخ الزراعة</label><input id="npDate" type="date">
       <button id="btnSavePlanting" onclick="savePlanting()">حفظ الزرعة وعرض خطة التسميد</button>
-      <button class="secondary" id="btnCancelPlanting" onclick="document.getElementById('newPlanting').classList.add('hidden')">إلغاء</button>
+      <button class="secondary" id="btnCancelPlanting" onclick="showTab('my')">إلغاء</button>
+    </div>
+  </section>
+
+  <!-- محاصيلي -->
+  <section id="tab-my" class="hidden">
+    <div class="card">
+      <h2 id="lblMyPlantings">محاصيلي</h2>
+      <div>إجمالي ما صرفته حتى الآن: <span class="total" id="myTotal">0 جنيه</span></div>
     </div>
     <div id="plantingList"></div>
   </section>
 
   <!-- المحاصيل -->
-  <section id="tab-crops" class="hidden">
+  <section id="tab-plans" class="hidden">
     <div class="card">
-      <h2 id="lblCrops">المحاصيل (30 محصولًا)</h2>
+      <h2 id="lblPlans">خطط تسميد لأشهر المحاصيل</h2>
+      <div class="note" style="font-size:17px">اختار المحافظة والمحصول والصنف، والخطة اللي هتظهر هتبقى على حسب اختياراتك — الخطط دي لكل محافظات مصر، مش المنوفية بس. ولو عايز تشوف كل الخطط، سيب الاختيارات على «كل المحافظات» و«كل المحاصيل».</div>
+      <label>المحافظة</label><select id="planGov" onchange="renderCrops()"></select>
+      <label>المحصول</label><select id="planCrop" onchange="onPlanCropChange()"></select>
+      <label>الصنف / التقاوي</label><select id="planVariety" onchange="renderCrops()"></select>
       <input id="cropSearch" placeholder="ابحث: قمح، قلقاس، ذرة..." oninput="renderCrops()">
       <div id="cropList"></div>
     </div>
@@ -186,31 +198,36 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
     <div class="card" id="adminCard" style="display:none">
       <h2 id="lblAdminUsers">إدارة المستخدمين (للأدمن فقط)</h2>
       <label>اسم مستخدم جديد</label><input id="nuUser">
+      <label>الاسم (هيظهر بدل اسم المستخدم)</label><input id="nuName" placeholder="مثال: أحمد محمد">
       <label>كلمة سر</label><input id="nuPass" type="password">
       <label>الدور</label><select id="nuRole"><option value="farmer">مزارع</option><option value="supervisor">مشرف (مهندس زراعي — يجاوب على أسئلة الإشراف)</option><option value="admin">أدمن</option></select>
       <button id="btnAddUser" onclick="addUser()">إضافة مستخدم</button>
       <div id="userList"></div>
-      <h3>طلبات إنشاء حساب معلقة (في انتظار موافقتك)</h3>
+      <details><summary>طلبات إنشاء حساب معلقة (في انتظار موافقتك)</summary>
       <div style="font-size:17px">أي حد معاه اللينك يقدر يطلب حساب من شاشة الدخول بزر «إنشاء حساب جديد». الطلب يفضل معلقًا ولا يدخل صاحبه لحد ما تقبل أو ترفض من هنا.</div>
       <div id="pendingList"></div>
-      <h3>قسم الإشراف (فتح / قفل)</h3>
+      </details>
+      <details><summary>قسم الإشراف (فتح / قفل)</summary>
       <div style="font-size:17px">قسم «إشراف» ظاهر لكل المستخدمين لكنه مقفول لحد ما تفتحه انت من هنا. لما تفتحه يقدر المزارعون يسألوا أسئلتهم، والمهندس الزراعي (دور «مشرف») يجاوب عليها.</div>
       <div id="supControl"></div>
-      <h3>تعديل بيانات المحاصيل (للأدمن)</h3>
+      </details>
+      <details><summary>تعديل بيانات المحاصيل (للأدمن)</summary>
       <div style="font-size:17px">جرعات التسميد في التطبيق إرشادية. عند صدور نشرة جديدة، عدّلها هنا وسيُحفظ التعديل مع تاريخه ومصدره. (التعديلات تُحفظ في نسختك الاحتياطية JSON).</div>
       <label>المحصول</label><select id="edCrop" onchange="loadCropEdit()"></select>
       <label>برنامج التسميد (نص حر يُعرض للمزارعين)</label>
       <textarea id="edFert" style="min-height:130px"></textarea>
       <label>المصدر والتاريخ</label><input id="edSource" placeholder="مثال: نشرة الإرشاد 2027">
       <button onclick="saveCropEdit()">حفظ التعديل</button>
-      <h3>تعديل المسميات (للأدمن)</h3>
+      </details>
+      <details><summary>تعديل المسميات (للأدمن)</summary>
       <div style="font-size:17px">من هنا تقدر تغيّر أسماء العناوين والأزرار والتبويبات بنفسك — مثال: غيّر «زرعة جديدة» إلى «إنشاء زراعة». اكتب الاسم الجديد في الخانة، والتغيير يُطبَّق فورًا ويُحفظ على جهازك (ويُصدَّر مع النسخة الاحتياطية). اترك الخانة فاضية لترجع للاسم الأصلي.</div>
       <div id="labelList"></div>
       <button class="secondary" onclick="resetLabels()">إرجاع المسميات الأصلية</button>
+      </details>
     </div>
     <div class="card">
       <h2>نسخة احتياطية ومزامنة بين الأجهزة</h2>
-      <p style="font-size:17px">هذه النسخة العامة لا تُزامن تلقائيًا بدون سيرفر سحابي. لنقل بيانات حسابك لموبايل آخر: صدّر نسخة من هنا، ثم افتح التطبيق على الموبايل الثاني وسجّل الدخول بنفس اسم المستخدم، ثم استورد الملف.</p>
+      <p style="font-size:17px">بياناتك بتتزامن تلقائيًا مع السيرفر — نفس الحساب على موبايل تاني هيشوف نفس البيانات. ولو حبيت نسخة احتياطية إضافية، تقدر تصدّر نسخة من هنا وتستوردها عند الحاجة.</p>
       <button id="btnExport" onclick="exportBackup()">⬇ تصدير نسخة احتياطية (JSON)</button>
       <label>استيراد نسخة احتياطية</label>
       <input type="file" id="importFile" accept="application/json" onchange="importBackup(event)">
@@ -222,10 +239,11 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 </div>
 
 <nav id="bottomnav" style="display:none">
-  <button id="nav-plantings" class="active" onclick="showTab('plantings')">🌱 زرعاتي</button>
-  <button id="nav-crops" onclick="showTab('crops')">🌾 المحاصيل</button>
+  <button id="nav-add" class="active" onclick="showTab('add')">➕ إضافة زراعة</button>
+  <button id="nav-my" onclick="showTab('my')">🌱 محاصيلي</button>
+  <button id="nav-plans" onclick="showTab('plans')">🌾 خطط تسميد لأشهر المحاصيل</button>
   <button id="nav-diag" onclick="showTab('diag')">🔍 أمراض المحاصيل</button>
-  <button id="nav-supervision" onclick="showTab('supervision')">🛡 إشراف</button>
+  <button id="nav-supervision" onclick="showTab('supervision')">🔒 إشراف</button>
   <button id="nav-account" onclick="showTab('account')">👤 حسابي</button>
 </nav>
 
@@ -243,11 +261,11 @@ const DB_KEY = "mzr_db_v1";
    "تعديل المسميات" في تبويب حسابي، والتغيير يُحفظ في DB.labels ويُطبَّق فورًا. */
 const DEFAULT_LABELS = {
   appTitle:"تطبيق المزارعين", appSubtitle:"زراعة علمية لكل محاصيل مصر — تسميد، تكاليف، وأمراض",
-  tabPlantings:"🌱 زرعاتي", tabCrops:"🌾 المحاصيل", tabDiag:"🔍 أمراض المحاصيل", tabSupervision:"🛡 إشراف", tabAccount:"👤 حسابي",
+  tabAdd:"➕ إضافة زراعة", tabMy:"🌱 محاصيلي", tabPlans:"🌾 خطط تسميد لأشهر المحاصيل", tabDiag:"🔍 أمراض المحاصيل", tabSupervision:"🔒 إشراف", tabAccount:"👤 حسابي",
   supervisionTitle:"إشراف",
-  myPlantingsTitle:"زرعاتي", newPlantingBtn:"+ سجّل زرعة جديدة", newPlantingTitle:"زرعة جديدة",
+  myPlantingsTitle:"محاصيلي", addPlantingTitle:"إضافة زراعة", newPlantingTitle:"زرعة جديدة",
   savePlantingBtn:"حفظ الزرعة وعرض خطة التسميد", cancelBtn:"إلغاء",
-  cropsTitle:"المحاصيل (30 محصولًا)", diagTitle:"أمراض المحاصيل", diagnoseBtn:"شخّص المرض",
+  plansTitle:"خطط تسميد لأشهر المحاصيل", diagTitle:"أمراض المحاصيل", diagnoseBtn:"شخّص المرض",
   accountTitle:"حسابي", adminUsersTitle:"إدارة المستخدمين (للأدمن فقط)", addUserBtn:"إضافة مستخدم",
   logoutBtn:"خروج", loginBtn:"دخول", setupAdminBtn:"إنشاء حساب الأدمن",
   dailyLogTitle:"سجل يومي — أضف ري / تسميد / رش / حصاد", addLogBtn:"إضافة للسجل (تُضاف للتكلفة فورًا)",
@@ -257,11 +275,11 @@ const DEFAULT_LABELS = {
 };
 const LABEL_DESCS = {
   appTitle:"اسم التطبيق (العنوان الرئيسي)", appSubtitle:"الوصف تحت اسم التطبيق",
-  tabPlantings:"تبويب زرعاتي (شريط التنقل السفلي)", tabCrops:"تبويب المحاصيل", tabDiag:"تبويب أمراض المحاصيل", tabSupervision:"تبويب إشراف", tabAccount:"تبويب حسابي",
+  tabAdd:"تبويب إضافة زراعة (شريط التنقل السفلي)", tabMy:"تبويب محاصيلي", tabPlans:"تبويب خطط تسميد لأشهر المحاصيل", tabDiag:"تبويب أمراض المحاصيل", tabSupervision:"تبويب إشراف (🔒 وهو مقفول)", tabAccount:"تبويب حسابي",
   supervisionTitle:"عنوان شاشة إشراف",
-  myPlantingsTitle:"عنوان شاشة زرعاتي", newPlantingBtn:"زر إضافة زرعة جديدة", newPlantingTitle:"عنوان نموذج زرعة جديدة",
+  myPlantingsTitle:"عنوان شاشة محاصيلي", addPlantingTitle:"عنوان شاشة إضافة زراعة", newPlantingTitle:"عنوان نموذج زرعة جديدة",
   savePlantingBtn:"زر حفظ الزرعة", cancelBtn:"زر إلغاء",
-  cropsTitle:"عنوان شاشة المحاصيل", diagTitle:"عنوان شاشة أمراض المحاصيل", diagnoseBtn:"زر شخّص المرض",
+  plansTitle:"عنوان شاشة خطط التسميد", diagTitle:"عنوان شاشة أمراض المحاصيل", diagnoseBtn:"زر شخّص المرض",
   accountTitle:"عنوان شاشة حسابي", adminUsersTitle:"عنوان إدارة المستخدمين", addUserBtn:"زر إضافة مستخدم",
   logoutBtn:"زر خروج", loginBtn:"زر دخول", setupAdminBtn:"زر إنشاء حساب الأدمن",
   dailyLogTitle:"عنوان السجل اليومي", addLogBtn:"زر إضافة للسجل",
@@ -274,10 +292,13 @@ function applyLabels(){
   const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
   document.title=L("appTitle");
   set("appTitle",L("appTitle")); set("appSubtitle",L("appSubtitle"));
-  set("nav-plantings",L("tabPlantings")); set("nav-crops",L("tabCrops")); set("nav-diag",L("tabDiag")); set("nav-account",L("tabAccount"));
-  set("lblMyPlantings",L("myPlantingsTitle")); set("btnNewPlanting",L("newPlantingBtn")); set("lblNewPlanting",L("newPlantingTitle"));
+  set("nav-add",L("tabAdd")); set("nav-my",L("tabMy")); set("nav-plans",L("tabPlans")); set("nav-diag",L("tabDiag"));
+  set("nav-supervision",supOpen()?"🛡 إشراف":L("tabSupervision"));
+  set("nav-account",L("tabAccount"));
+  set("lblSupervision",L("supervisionTitle"));
+  set("lblAddPlanting",L("addPlantingTitle")); set("lblMyPlantings",L("myPlantingsTitle")); set("lblNewPlanting",L("newPlantingTitle"));
   set("btnSavePlanting",L("savePlantingBtn")); set("btnCancelPlanting",L("cancelBtn"));
-  set("lblCrops",L("cropsTitle")); set("lblDiag",L("diagTitle")); set("btnDiagnose",L("diagnoseBtn"));
+  set("lblPlans",L("plansTitle")); set("lblDiag",L("diagTitle")); set("btnDiagnose",L("diagnoseBtn"));
   set("lblAccount",L("accountTitle")); set("lblAdminUsers",L("adminUsersTitle")); set("btnAddUser",L("addUserBtn"));
   set("btnLogout",L("logoutBtn")); set("btnLogin",L("loginBtn")); set("btnSetupAdmin",L("setupAdminBtn")); set("btnExport",L("exportBtn"));
 }
@@ -392,8 +413,8 @@ async function sb(){
 }
 function withTimeout(promise,ms){return Promise.race([promise,new Promise(function(res){setTimeout(function(){res({data:null,error:{message:"timeout"}});},ms);})]);}
 /* ===== تحويل بين شكل التطبيق المحلي وصفوف Supabase (دوال نقية قابلة للاختبار) ===== */
-function userToRow(u){return {id:u.username,username:u.username,pass_hash:u.pass,role:u.role||"farmer",status:u.status||"approved",plan:u.plan||"free",monthly_fee:(u.monthlyFee==null?null:u.monthlyFee),paid_until:u.paidUntil||null,requested_at:u.requestedAt||null,created_at:u.created||new Date().toISOString()};}
-function rowToUser(r){return normUser({username:r.username,pass:r.pass_hash,role:r.role||"farmer",status:r.status||"approved",plan:r.plan||"free",monthlyFee:(r.monthly_fee==null?null:Number(r.monthly_fee)),paidUntil:r.paid_until||null,requestedAt:r.requested_at||null,created:r.created_at||null});}
+function userToRow(u){return {id:u.username,username:u.username,display_name:u.displayName||u.username,pass_hash:u.pass,role:u.role||"farmer",status:u.status||"approved",plan:u.plan||"free",monthly_fee:(u.monthlyFee==null?null:u.monthlyFee),paid_until:u.paidUntil||null,requested_at:u.requestedAt||null,created_at:u.created||new Date().toISOString()};}
+function rowToUser(r){return normUser({username:r.username,displayName:r.display_name||r.username,pass:r.pass_hash,role:r.role||"farmer",status:r.status||"approved",plan:r.plan||"free",monthlyFee:(r.monthly_fee==null?null:Number(r.monthly_fee)),paidUntil:r.paid_until||null,requestedAt:r.requested_at||null,created:r.created_at||null});}
 function plantingToRow(p){return {id:p.id,owner_id:p.owner,owner_name:p.owner,crop:p.cropId,variety:p.variety||null,governorate:p.gov||null,soil:p.soil||null,irrigation:p.irr||null,area_value:(p.areaValue==null?null:p.areaValue),area_unit:(p.areaUnit==="قيراط"||p.areaUnit==="فدان")?p.areaUnit:null,area_feddan:areaFeddan(p),planting_date:p.date||null,custom_crop_name:p.customCropName||null,custom_crop_desc:p.customCropDesc||null,custom_plan:p.customCropPlan||null,search_link:p.customSearchUrl||null,created_at:p.created||new Date().toISOString()};}
 function rowToPlanting(r,keep){return {id:r.id,owner:r.owner_id,cropId:r.crop,customCropName:r.custom_crop_name||"",customCropDesc:r.custom_crop_desc||"",customCropPlan:r.custom_plan||"",customSearchUrl:r.search_link||"",variety:r.variety||"",gov:r.governorate||"",soil:r.soil||"",irr:r.irrigation||"",areaValue:(r.area_value==null?null:Number(r.area_value)),areaUnit:r.area_unit||"لا أعلم",date:r.planting_date||"",yieldActual:(keep?keep.yieldActual:null),yieldUnit:(keep?keep.yieldUnit:""),salePrice:(keep?keep.salePrice:null),closed:(keep?!!keep.closed:false),created:r.created_at||(keep?keep.created:new Date().toISOString())};}
 function logToRow(l,owner){return {id:l.id,planting_id:l.plantingId,owner_id:owner||null,action:l.type,log_date:l.date||null,op_cost:logOpCost(l),labor_cost:logLaborCost(l),note:l.note||null};}
@@ -501,7 +522,13 @@ async function pushToCloud(db){
   try{
     const ownerOf={};
     (db.plantings||[]).forEach(function(p){ownerOf[p.id]=p.owner;});
-    if(await sbUpsert("users",(db.users||[]).filter(function(x){return isAdmin||x.username===me;}).map(userToRow)))ok=true;
+    const userRows=(db.users||[]).filter(function(x){return isAdmin||x.username===me;}).map(userToRow);
+    let usersOk=await sbUpsert("users",userRows);
+    /* توافق: لو عمود display_name لسه متعملش في Supabase (ALTER لسه متنفذش)،
+       أعد المحاولة بدونه عشان مزامنة المستخدمين متتكسرش — والاسم الظاهر
+       هيتزامن لوحده أول ما العمود يتعمل. */
+    if(!usersOk&&userRows.length){const stripped=userRows.map(function(r){const c=Object.assign({},r);delete c.display_name;return c;});usersOk=await sbUpsert("users",stripped);}
+    if(usersOk)ok=true;
     if(await sbUpsert("plantings",(db.plantings||[]).filter(function(p){return isAdmin||p.owner===me;}).map(plantingToRow)))ok=true;
     if(await sbUpsert("logs",(db.logs||[]).filter(function(l){return ownerOf[l.plantingId]&&(isAdmin||ownerOf[l.plantingId]===me);}).map(function(l){return logToRow(l,ownerOf[l.plantingId]);})))ok=true;
     if(await sbUpsert("sales",(db.sales||[]).filter(function(s){return ownerOf[s.plantingId]&&(isAdmin||ownerOf[s.plantingId]===me);}).map(function(s){return saleToRow(s,ownerOf[s.plantingId]);})))ok=true;
@@ -548,7 +575,12 @@ const MAX_USERS=1000; // الحد الأقصى لعدد المستخدمين
    المستخدمون القدامى والمستخدمون الذين يضيفهم الأدمن بنفسه يبقوا
    "approved" تلقائيًا. الحساب الجديد من زر «إنشاء حساب جديد» يبقى
    "pending" لحد ما الأدمن يقبل أو يرفض من قائمة «طلبات معلقة». */
-function normUser(u){if(!u)return u;if(u.status!=="pending"&&u.status!=="rejected")u.status="approved";if(u.plan!=="paid")u.plan="free";if(u.plan==="paid"){u.monthlyFee=(u.monthlyFee==null||isNaN(Number(u.monthlyFee)))?null:Number(u.monthlyFee);u.paidUntil=u.paidUntil||null;}else{u.monthlyFee=null;u.paidUntil=null;}return u;}
+function normUser(u){if(!u)return u;if(u.status!=="pending"&&u.status!=="rejected")u.status="approved";if(u.plan!=="paid")u.plan="free";if(u.plan==="paid"){u.monthlyFee=(u.monthlyFee==null||isNaN(Number(u.monthlyFee)))?null:Number(u.monthlyFee);u.paidUntil=u.paidUntil||null;}else{u.monthlyFee=null;u.paidUntil=null;}
+/* الاسم الظاهر: حسابات قديمة بلا displayName تظهر باسم المستخدم عادي — لا يُفرض عليها تسجيل جديد */
+if(!u.displayName||!String(u.displayName).trim())u.displayName=u.username;else u.displayName=String(u.displayName).trim();return u;}
+/* الاسم اللي يظهر في الواجهة (الشريط العلوي، القوايم، الأسئلة، صاحب الزرعة) — اسم المستخدم يفضل للتعريف الداخلي فقط */
+function displayNameOf(username){const u=DB.users.find(x=>x.username===username);return (u&&u.displayName)?u.displayName:username;}
+function displayNameOfUser(u){return (u&&u.displayName)?u.displayName:(u?u.username:"");}
 function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function subStatus(u){
   if(!u||u.plan!=="paid")return {key:"free",label:"مجاني",active:true};
@@ -642,10 +674,11 @@ function refreshAuth(){
 }
 async function setupAdmin(){
   const u=document.getElementById("setupUser").value.trim(),p=document.getElementById("setupPass").value;
+  const dn=document.getElementById("setupName").value.trim()||u;
   if(u.length<3||p.length<4){alert("اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.");return;}
   await pullUsers();
   if(DB.users.length){alert("يوجد حسابات بالفعل على السيرفر — سجّل الدخول بحساب الأدمن الموجود.");refreshAuth();return;}
-  DB.users.push({username:u,pass:await sha256(p),role:"admin",plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});
+  DB.users.push({username:u,displayName:dn,pass:await sha256(p),role:"admin",plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});
   saveDB(DB);sessionStorage.setItem(SESSION_KEY,JSON.stringify({username:u}));enterApp();
 }
 async function login(){
@@ -659,25 +692,26 @@ async function login(){
 }
 async function registerUser(){
   const name=document.getElementById("regUser").value.trim(),pass=document.getElementById("regPass").value;
+  const dn=document.getElementById("regName").value.trim()||name;
   const msg=document.getElementById("regMsg");
   if(name.length<3||pass.length<4){msg.style.color="#8a1f1f";msg.textContent="اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.";return;}
   await pullUsers();
   if(DB.users.some(x=>x.username===name)){msg.style.color="#8a1f1f";msg.textContent="اسم المستخدم ده موجود بالفعل — جرّب اسم تاني.";return;}
   if(DB.users.length>=MAX_USERS){msg.style.color="#8a1f1f";msg.textContent="وصل التطبيق للحد الأقصى ("+MAX_USERS+" مستخدم) — تواصل مع الأدمن.";return;}
-  DB.users.push({username:name,pass:await sha256(pass),role:"farmer",plan:"free",monthlyFee:null,paidUntil:null,status:"pending",requestedAt:new Date().toISOString(),created:new Date().toISOString()});
+  DB.users.push({username:name,displayName:dn,pass:await sha256(pass),role:"farmer",plan:"free",monthlyFee:null,paidUntil:null,status:"pending",requestedAt:new Date().toISOString(),created:new Date().toISOString()});
   saveDB(DB);
   msg.style.color="#1b6b2e";msg.textContent="تم إرسال طلبك بنجاح — حسابك في انتظار موافقة الأدمن، وهتقدر تدخل بعد ما يوافق.";
-  document.getElementById("regUser").value="";document.getElementById("regPass").value="";
+  document.getElementById("regUser").value="";document.getElementById("regName").value="";document.getElementById("regPass").value="";
 }
 function approveUser(name){
   const me=currentUser();if(!me||me.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
   const x=DB.users.find(u=>u.username===name);if(!x)return;
-  x.status="approved";saveDB(DB);renderAccount();alert("تم قبول "+name+" — يقدر يدخل دلوقتي.");
+  x.status="approved";saveDB(DB);renderAccount();alert("تم قبول "+displayNameOf(name)+" — يقدر يدخل دلوقتي.");
 }
 function rejectUser(name){
   const me=currentUser();if(!me||me.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
   const x=DB.users.find(u=>u.username===name);if(!x)return;
-  if(!confirm("رفض طلب "+name+"؟ الحساب هيفضل مرفوضًا وما يقدرش يدخل."))return;
+  if(!confirm("رفض طلب "+displayNameOf(name)+"؟ الحساب هيفضل مرفوضًا وما يقدرش يدخل."))return;
   x.status="rejected";saveDB(DB);renderAccount();
 }
 function renderPendingList(){
@@ -686,8 +720,8 @@ function renderPendingList(){
   const rej=DB.users.filter(x=>x.status==="rejected");
   let h="";
   if(!pend.length)h+="<div class='note'>لا توجد طلبات معلقة حاليًا.</div>";
-  else h+=pend.map(x=>"<div class='plant'><b>"+esc(x.username)+"</b> <span class='badge grey'>في انتظار الموافقة</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">✅ قبول</button> <button class='small warn' onclick=\"rejectUser('"+esc(x.username)+"')\">❌ رفض</button></div>").join("");
-  if(rej.length)h+="<h3>طلبات مرفوضة</h3>"+rej.map(x=>"<div class='plant'><b>"+esc(x.username)+"</b> <span class='badge red'>مرفوض</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">قبول بعد الرفض</button> <button class='small warn' onclick=\"deleteUser('"+esc(x.username)+"')\">حذف نهائي</button></div>").join("");
+  else h+=pend.map(x=>"<div class='plant'><b>"+esc(displayNameOf(x.username))+"</b> <span class='badge grey'>في انتظار الموافقة</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">✅ قبول</button> <button class='small warn' onclick=\"rejectUser('"+esc(x.username)+"')\">❌ رفض</button></div>").join("");
+  if(rej.length)h+="<h3>طلبات مرفوضة</h3>"+rej.map(x=>"<div class='plant'><b>"+esc(displayNameOf(x.username))+"</b> <span class='badge red'>مرفوض</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">قبول بعد الرفض</button> <button class='small warn' onclick=\"deleteUser('"+esc(x.username)+"')\">حذف نهائي</button></div>").join("");
   el.innerHTML=h;
 }
 /* ===== الإشراف: قسم مقفول يفتحه الأدمن =====
@@ -707,7 +741,7 @@ function toggleSupervision(){
   const me=currentUser();if(!me||me.role!=="admin"){alert("فتح وقفل قسم الإشراف للأدمن فقط.");return;}
   if(!DB.supervision)DB.supervision={open:false};
   DB.supervision.open=!DB.supervision.open;
-  saveDB(DB);renderSupControl();renderSupervision();
+  saveDB(DB);renderSupControl();renderSupervision();applyLabels();
   alert(DB.supervision.open?"تم فتح قسم الإشراف — المزارعون يقدروا يسألوا دلوقتي.":"تم قفل قسم الإشراف — سيظهر للمستخدمين أنه مغلق حاليًا.");
 }
 function renderSupervision(){
@@ -724,8 +758,8 @@ function renderSupervision(){
     +"<textarea id='supQText' placeholder='مثال: ورق القلقاس فيه بقع بنية، أعمل إيه؟'></textarea>"
     +"<button onclick=\"askQuestion()\">إرسال السؤال</button>";
   if(!qs.length)h+="<p>لا توجد أسئلة بعد — كن أول من يسأل.</p>";
-  else h+=qs.map(q=>"<div class='plant'><b>❓ "+esc(q.asker)+":</b> "+esc(q.text)+"<br><span style='font-size:15px;color:#555'>"+fmtDate(q.date)+"</span>"
-    +(q.answer?"<div style='margin-top:8px;background:#eef7ee;border-radius:10px;padding:10px'><b>✅ إجابة "+esc(q.answeredBy||"المشرف")+":</b> "+esc(q.answer)+"</div>"
+  else h+=qs.map(q=>"<div class='plant'><b>❓ "+esc(displayNameOf(q.asker))+":</b> "+esc(q.text)+"<br><span style='font-size:15px;color:#555'>"+fmtDate(q.date)+"</span>"
+    +(q.answer?"<div style='margin-top:8px;background:#eef7ee;border-radius:10px;padding:10px'><b>✅ إجابة "+esc(q.answeredBy?displayNameOf(q.answeredBy):"المشرف")+":</b> "+esc(q.answer)+"</div>"
       :canAnswer?"<div style='margin-top:8px'><label>إجابتك كمشرف</label><textarea id='supAns-"+q.id+"' placeholder='اكتب الإجابة هنا'></textarea><button class='small' onclick=\"answerQuestion('"+q.id+"')\">إرسال الإجابة</button></div>"
       :"<div style='margin-top:8px;color:#8a6d00'>⏳ في انتظار إجابة المهندس المشرف.</div>")
     +"</div>").join("");
@@ -756,7 +790,7 @@ function enterApp(){
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("topbar").style.display="flex";
   document.getElementById("bottomnav").style.display="flex";
-  document.getElementById("whoami").textContent="👤 "+u.username+" — "+roleName(u.role);
+  document.getElementById("whoami").textContent="👤 "+displayNameOfUser(u)+" — "+roleName(u.role);
   updateNetstat();
   initForms();renderAll();updateSubBanner();
   if(u.role!=="admin"&&!subActive(u))showTab("account");
@@ -764,8 +798,8 @@ function enterApp(){
 }
 function showTab(t){
   const _su=currentUser();
-  if(_su&&_su.role!=="admin"&&t==="plantings"&&!subActive(_su)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن لاستئناف استخدام الزراعات. بياناتك محفوظة ولن تُحذف.");t="account";}
-  ["plantings","crops","diag","supervision","account"].forEach(x=>{
+  if(_su&&_su.role!=="admin"&&(t==="add"||t==="my")&&!subActive(_su)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن لاستئناف استخدام الزراعات. بياناتك محفوظة ولن تُحذف.");t="account";}
+  ["add","my","plans","diag","supervision","account"].forEach(x=>{
     document.getElementById("tab-"+x).classList.toggle("hidden",x!==t);
     document.getElementById("nav-"+x).classList.toggle("active",x===t);
   });
@@ -780,6 +814,9 @@ function initForms(){
   const dg=document.getElementById("dgCrop");dg.innerHTML=CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+"</option>").join("")+"<option value='custom'>غير ذلك — محصول مش في القائمة</option><option>لا أعلم</option>";
   const ed=document.getElementById("edCrop");ed.innerHTML=CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+"</option>").join("");
   const gv=document.getElementById("npGov");gv.innerHTML=GOVS.map(g=>"<option>"+g+"</option>").join("")+"<option>غير ذلك</option>";
+  const pg=document.getElementById("planGov");pg.innerHTML="<option>كل المحافظات</option>"+GOVS.filter(g=>g!=="لا أعلم").map(g=>"<option>"+esc(g)+"</option>").join("");
+  const pc=document.getElementById("planCrop");pc.innerHTML="<option value='all'>كل المحاصيل</option>"+CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+(c.priority?" ⭐":"")+"</option>").join("");
+  fillPlanVarieties();
   document.getElementById("npDate").value=new Date().toISOString().slice(0,10);
   fillVarieties();
   document.getElementById("symptomChips").innerHTML=SYMPTOMS.map(s=>"<span class='chip' data-s='"+esc(s)+"' onclick='this.classList.toggle(\"on\")'>"+esc(s)+"</span>").join("");
@@ -799,7 +836,7 @@ function fillVarieties(){
 function renderAll(){renderPlantings();renderCrops();renderSupervision();renderAccount();}
 
 /* ===== الزراعات ===== */
-function showNewPlanting(){document.getElementById("newPlanting").classList.remove("hidden");window.scrollTo(0,0);}
+function showNewPlanting(){showTab("add");}
 function resolveOther(selectId,customId){
   const v=document.getElementById(selectId).value;
   if(v==="غير ذلك"){const t=(document.getElementById(customId).value||"").trim();return t||"غير ذلك";}
@@ -818,7 +855,7 @@ function savePlanting(){
   customSearchUrl:(window.__customSearch&&window.__customSearch.url)||"",
   variety:resolveOther("npVariety","customVarietyText"),gov:resolveOther("npGov","customGovText"),soil:resolveOther("npSoil","customSoilText"),irr:resolveOther("npIrr","customIrrText"),areaValue:isNaN(areaVal)?null:areaVal,areaUnit:document.getElementById("npUnit").value,date:document.getElementById("npDate").value||new Date().toISOString().slice(0,10),yieldActual:null,yieldUnit:"",salePrice:null,closed:false,created:new Date().toISOString()};
   DB.plantings.push(p);saveDB(DB);
-  document.getElementById("newPlanting").classList.add("hidden");renderPlantings();
+  renderPlantings();showTab("my");
   alert("تم حفظ الزرعة. ستظهر خطة التسميد بالأسفل — اضغط على الزرعة لعرضها.");
 }
 function planSteps(p){
@@ -836,7 +873,7 @@ function renderPlantings(){
   const list=visiblePlantings();
   document.getElementById("myTotal").textContent=fmt(list.reduce((s,p)=>s+plantingCost(p.id),0))+" جنيه";
   const el=document.getElementById("plantingList");
-  if(!list.length){el.innerHTML="<div class='card'>لا توجد زراعات بعد. سجّل أول زرعة من الزر أعلاه.</div>";return;}
+  if(!list.length){el.innerHTML="<div class='card'>لا توجد زراعات بعد. سجّل أول زرعة من تبويب «إضافة زراعة».</div>";return;}
   el.innerHTML=list.map(p=>{
     const c=cropObjOf(p);const cost=plantingCost(p.id);const af=areaFeddan(p);
     const steps=planSteps(p);
@@ -844,16 +881,35 @@ function renderPlantings(){
     const late=steps.filter(s=>s.overdue);
     return "<div class='plant'><b style='font-size:21px'>"+esc(c.name)+" ⭐".replace(" ⭐","")+"</b> "+(c.priority?"<span class='badge'>أولوية المنوفية</span>":"")+"<br>"
     +"الصنف: "+esc(p.variety)+" | المحافظة: "+esc(p.gov)+" | التربة: "+esc(p.soil)+" | الري: "+esc(p.irr)+"<br>"
-    +"المساحة: "+esc(areaLabel(p))+" | تاريخ الزراعة: "+fmtDate(p.date)+" | صاحب الزرعة: "+esc(p.owner)+"<br>"
+    +"المساحة: "+esc(areaLabel(p))+" | تاريخ الزراعة: "+fmtDate(p.date)+" | صاحب الزرعة: "+esc(displayNameOf(p.owner))+"<br>"
     +(late.length?"<span class='badge red'>⚠️ تسميد فات ميعاده: "+late.length+" خطوة</span> ":"")
     +(next?"<span class='badge'>التسميد الجاي: "+esc(next.label)+" — "+fmtDate(next.date)+"</span>":"")
     +"<br>صرفت حتى الآن: <b>"+fmt(cost)+" جنيه</b>"+(af?" (تكلفة الفدان: "+fmt(cost/af)+" جنيه)":"")
     +"<br>إجمالي المبيعات حتى الآن: <b>"+fmt(plantingSalesTotal(p.id))+" جنيه</b>"
-    +"<div><button class='small' onclick=\"toggleDetail('"+p.id+"')\">"+esc(L("viewPlanBtn"))+"</button></div>"
+    +"<div><button class='small' onclick=\"toggleDetail('"+p.id+"')\">"+esc(L("viewPlanBtn"))+"</button> <button class='small warn' onclick=\"deletePlanting('"+p.id+"')\">🗑 حذف الزرعة</button></div>"
     +"<div id='det-"+p.id+"' class='hidden'>"+plantingDetail(p,c,steps,cost)+"</div></div>";
   }).join("");
 }
 function toggleDetail(id){document.getElementById("det-"+id).classList.toggle("hidden");}
+/* حذف زرعة: صاحبها أو الأدمن فقط. تُحذف الزرعة مع سجلاتها ومبيعاتها
+   محليًا، وتُحذف صفوفها من السيرفر أيضًا (أفضل جهد — لو النت قاطع
+   الحذف المحلي يفضل قائمًا). ملحوظة: موبايل تاني فيه نسخة قديمة من
+   الزرعة ممكن يرجّعها بالدفع عند مزامنته — لا توجد علامات حذف (tombstones). */
+function deletePlanting(id){
+  const u=currentUser();const p=DB.plantings.find(x=>x.id===id);if(!p)return;
+  if(!u||(u.role!=="admin"&&p.owner!==u.username)){alert("لا يمكنك حذف زرعة ليست لك.");return;}
+  if(!confirm("حذف الزرعة دي نهائيًا؟ هتتحذف معاها سجلاتها ومبيعاتها."))return;
+  const logIds=DB.logs.filter(l=>l.plantingId===id).map(l=>l.id);
+  const saleIds=(DB.sales||[]).filter(s=>s.plantingId===id).map(s=>s.id);
+  DB.plantings=DB.plantings.filter(x=>x.id!==id);
+  DB.logs=DB.logs.filter(l=>l.plantingId!==id);
+  if(DB.sales)DB.sales=DB.sales.filter(s=>s.plantingId!==id);
+  saveDB(DB);renderPlantings();
+  sbDeleteRow("plantings","id",id).catch(function(){});
+  logIds.forEach(function(lid){sbDeleteRow("logs","id",lid).catch(function(){});});
+  saleIds.forEach(function(sid){sbDeleteRow("sales","id",sid).catch(function(){});});
+  alert("تم حذف الزرعة وسجلاتها ومبيعاتها.");
+}
 function plantingDetail(p,c,steps,cost){
   const af=areaFeddan(p);
   let h="<h3>خطة التسميد (إرشادية بالفدان)</h3><div class='note'>"+esc(COMMON_GLOSSARY)+"</div><div class='warnbox'>"+esc(withCommonNames(DB.cropEdits[c.id]?DB.cropEdits[c.id].fert:c.fert))+"</div>";
@@ -944,18 +1000,43 @@ function closeSeason(pid){
 }
 
 /* ===== المحاصيل ===== */
+/* ===== خطط تسميد لأشهر المحاصيل — بفلاتر =====
+   3 قوائم: المحافظة، المحصول، الصنف/التقاوي — تشتغل مع بعض ومع البحث النصي.
+   المحافظة تفلتر للمحاصيل اللي بياناتها بتقول إنها بتتزرع فيها (حقل gov)،
+   والمحاصيل اللي حقلها «كل الجمهورية» تظهر مع أي محافظة. الصنف المختار
+   يظهر في عنوان الخطة. الافتراضي: كل المحافظات وكل المحاصيل، وأصحاب
+   أولوية المنوفية (⭐) يظهروا الأول. */
+function fillPlanVarieties(){
+  const v=document.getElementById("planVariety");if(!v)return;
+  const cid=document.getElementById("planCrop").value;
+  let opts=["كل الأصناف"];
+  if(cid&&cid!=="all"){const c=cropById(cid);if(c)opts=opts.concat(c.varieties);}
+  opts=opts.concat(["لا أعلم","غير ذلك"]);
+  v.innerHTML=opts.map(x=>"<option>"+esc(x)+"</option>").join("");
+}
+function onPlanCropChange(){fillPlanVarieties();renderCrops();}
 function renderCrops(){
   const q=(document.getElementById("cropSearch").value||"").trim();
-  const list=CROPS.filter(c=>!q||c.name.includes(q));
+  const govEl=document.getElementById("planGov");
+  const cropEl=document.getElementById("planCrop");
+  const varEl=document.getElementById("planVariety");
+  const gov=govEl?govEl.value:"كل المحافظات";
+  const cropSel=cropEl?cropEl.value:"all";
+  const varSel=varEl?varEl.value:"كل الأصناف";
+  let list=CROPS.filter(c=>!q||c.name.includes(q));
+  if(gov&&gov!=="كل المحافظات")list=list.filter(c=>(c.gov||"").includes(gov)||(c.gov||"").includes("كل الجمهورية"));
+  if(cropSel&&cropSel!=="all")list=list.filter(c=>c.id===cropSel);
+  list=list.slice().sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
   document.getElementById("cropList").innerHTML=list.map(c=>{
     const edit=DB.cropEdits[c.id];
-    return "<div class='plant'><b style='font-size:21px'>"+esc(c.name)+"</b> "+(c.priority?"<span class='badge'>أولوية المنوفية ⭐</span>":"")+" <span class='badge grey'>"+esc(c.season)+"</span><br>"
+    const varNote=(varSel&&varSel!=="كل الأصناف")?" — الصنف: "+esc(varSel):"";
+    return "<div class='plant'><b style='font-size:21px'>"+esc(c.name)+varNote+"</b> "+(c.priority?"<span class='badge'>أولوية المنوفية ⭐</span>":"")+" <span class='badge grey'>"+esc(c.season)+"</span><br>"
     +"ميعاد الزراعة: "+esc(c.planting)+"<br>التربة: "+esc(c.soil)+"<br>الري: "+esc(c.irrigation)+"<br>المحافظات: "+esc(c.gov)+"<br>"
     +"الأصناف: "+esc(c.varieties.join("، "))+"<br>الإنتاجية المتوقعة: "+esc(c.yield)
     +"<div class='note' style='margin:8px 0'>"+esc(COMMON_GLOSSARY)+"</div>"
     +"<div class='warnbox'><b>برنامج التسميد الكيماوي (إرشادي بالفدان):</b><br>"+esc(withCommonNames(edit?edit.fert:c.fert))+(edit?"<br><small>آخر تعديل: "+esc(edit.source||"")+" — "+fmtDate(edit.date)+"</small>":"")+"</div>"
     +"<b>الأمراض الشائعة:</b><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul></div>";
-  }).join("")||"<p>لا توجد نتائج.</p>";
+  }).join("")||"<p>لا توجد نتائج مطابقة لاختياراتك — جرّب توسّع المحافظة أو المحصول.</p>";
 }
 
 /* ===== أمراض المحاصيل (التشخيص) ===== */
@@ -992,7 +1073,7 @@ function diagnose(){
 function renderAccount(){
   const u=currentUser();if(!u)return;
   const mine=DB.plantings.filter(p=>p.owner===u.username);
-  document.getElementById("accountInfo").innerHTML="اسم المستخدم: <b>"+esc(u.username)+"</b><br>الدور: <b>"+roleName(u.role)+"</b><br>عدد زراعاتك: "+mine.length+" | إجمالي مصاريفك: "+fmt(mine.reduce((s,p)=>s+plantingCost(p.id),0))+" جنيه<br>الاشتراك: <b>"+esc(subStatus(u).label)+"</b>"+(u.plan==="paid"&&u.monthlyFee!=null?" ("+fmt(u.monthlyFee)+" جنيه/شهر)":"")+(u.role!=="admin"&&!subActive(u)?"<br><span style='color:#8a1f1f'><b>⚠️ اشتراكك منتهي — جدّد عند الأدمن لاستئناف الزراعات. بياناتك محفوظة.</b></span>":"");
+  document.getElementById("accountInfo").innerHTML="الاسم: <b>"+esc(displayNameOfUser(u))+"</b><br>الدور: <b>"+roleName(u.role)+"</b><br>عدد زراعاتك: "+mine.length+" | إجمالي مصاريفك: "+fmt(mine.reduce((s,p)=>s+plantingCost(p.id),0))+" جنيه<br>الاشتراك: <b>"+esc(subStatus(u).label)+"</b>"+(u.plan==="paid"&&u.monthlyFee!=null?" ("+fmt(u.monthlyFee)+" جنيه/شهر)":"")+(u.role!=="admin"&&!subActive(u)?"<br><span style='color:#8a1f1f'><b>⚠️ اشتراكك منتهي — جدّد عند الأدمن لاستئناف الزراعات. بياناتك محفوظة.</b></span>":"");
   const isAdmin=u.role==="admin";
   document.getElementById("adminCard").style.display=isAdmin?"block":"none";
   if(isAdmin){
@@ -1011,7 +1092,7 @@ function renderUserList(me){
   +"<div style='font-size:16px'>المجاني: دخول كامل بدون دفع. المدفوع شهريًا: يحدد الأدمن المبلغ، ويسجل «مدفوع حتى» تاريخًا معينًا عند الدفع. لو انتهى التاريخ يُقفل دخول المزارع للزراعات حتى يجدد، وبياناته تفضل محفوظة.</div>"
   +DB.users.map((x,i)=>{
     const s=subStatus(x);
-    return "<div class='plant'><b>"+esc(x.username)+"</b> — "+roleName(x.role)+" "+(x.status==="pending"?"<span class='badge grey'>في انتظار الموافقة</span>":x.status==="rejected"?"<span class='badge red'>مرفوض</span>":"<span class='badge'>مقبول</span>")+" "+subBadge(x)
+    return "<div class='plant'><b>"+esc(displayNameOf(x.username))+"</b><br><span style='font-size:15px;color:#777'>@"+esc(x.username)+"</span> — "+roleName(x.role)+" "+(x.status==="pending"?"<span class='badge grey'>في انتظار الموافقة</span>":x.status==="rejected"?"<span class='badge red'>مرفوض</span>":"<span class='badge'>مقبول</span>")+" "+subBadge(x)
     +(x.plan==="paid"&&x.monthlyFee!=null?"<br>الاشتراك الشهري: "+fmt(x.monthlyFee)+" جنيه/شهر":"")
     +"<br><label style='font-size:16px'>نوع الاشتراك</label><select id='subPlan-"+i+"'><option value='free'"+(x.plan!=="paid"?" selected":"")+">مجاني</option><option value='paid'"+(x.plan==="paid"?" selected":"")+">مدفوع شهريًا</option></select>"
     +"<label style='font-size:16px'>المبلغ الشهري (جنيه) — يحدده الأدمن</label><input id='subFee-"+i+"' type='number' min='0' step='any' placeholder='مثال: 50' value='"+(x.monthlyFee!=null?x.monthlyFee:"")+"'>"
@@ -1035,15 +1116,16 @@ function saveSubscription(i){
     x.plan="free";x.monthlyFee=null;x.paidUntil=null;
   }
   saveDB(DB);renderAccount();
-  alert("تم حفظ اشتراك "+x.username+": "+subStatus(x).label+(x.plan==="paid"?" ("+fmt(x.monthlyFee)+" جنيه/شهر)":""));
+  alert("تم حفظ اشتراك "+displayNameOf(x.username)+": "+subStatus(x).label+(x.plan==="paid"?" ("+fmt(x.monthlyFee)+" جنيه/شهر)":""));
 }
 async function addUser(){
   const u=currentUser();if(!u||u.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
   const name=document.getElementById("nuUser").value.trim(),pass=document.getElementById("nuPass").value,role=document.getElementById("nuRole").value;
+  const dn=document.getElementById("nuName").value.trim()||name;
   if(name.length<3||pass.length<4){alert("اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.");return;}
   if(DB.users.some(x=>x.username===name)){alert("اسم المستخدم موجود بالفعل.");return;}
   if(DB.users.length>=MAX_USERS){alert("وصل التطبيق للحد الأقصى ("+MAX_USERS+" مستخدم).");return;}
-  DB.users.push({username:name,pass:await sha256(pass),role,plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});saveDB(DB);renderAccount();alert("تمت إضافة "+name+" ("+roleName(role)+") — الاشتراك الافتراضي: مجاني.");
+  DB.users.push({username:name,displayName:dn,pass:await sha256(pass),role,plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});saveDB(DB);renderAccount();alert("تمت إضافة "+dn+" ("+roleName(role)+") — الاشتراك الافتراضي: مجاني.");
 }
 async function toggleRole(name){
   const x=DB.users.find(u=>u.username===name);if(!x)return;
@@ -1055,7 +1137,7 @@ async function resetPass(name){
 }
 function deleteUser(name){
   const u=currentUser();if(name===u.username){alert("لا يمكنك حذف حسابك.");return;}
-  if(!confirm("حذف المستخدم "+name+"؟ ستبقى زراعاته ظاهرة للأدمن."))return;
+  if(!confirm("حذف المستخدم "+displayNameOf(name)+"؟ ستبقى زراعاته ظاهرة للأدمن."))return;
   DB.users=DB.users.filter(x=>x.username!==name);saveDB(DB);sbDeleteRow("users","id",name);renderAccount();
 }
 function loadCropEdit(){
@@ -1096,7 +1178,7 @@ function importBackup(ev){
     if(d.supervision)DB.supervision=d.supervision;
     if(d.cropEdits)DB.cropEdits=Object.assign({},DB.cropEdits,d.cropEdits);
     if(d.labels)DB.labels=Object.assign({},DB.labels||{},d.labels);
-    saveDB(DB);renderAll();alert("تم الاستيراد بنجاح. افتح تبويب زرعاتي للتأكد.");
+    saveDB(DB);renderAll();alert("تم الاستيراد بنجاح. افتح تبويب «محاصيلي» للتأكد.");
   }catch(e){alert("تعذّرت قراءة الملف.");}};
   r.readAsText(f);
 }
