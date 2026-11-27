@@ -153,7 +153,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
   <!-- المحاصيل -->
   <section id="tab-plans" class="hidden">
     <div class="card">
-      <h2 id="lblPlans">خطط تسميد لأشهر المحاصيل</h2>
+      <h2 id="lblPlans">خطط تسميد</h2>
       <div class="note" style="font-size:17px">اختار المحافظة والمحصول والصنف، والخطة اللي هتظهر هتبقى على حسب اختياراتك — الخطط دي لكل محافظات مصر، مش المنوفية بس. ولو عايز تشوف كل الخطط، سيب الاختيارات على «كل المحافظات» و«كل المحاصيل».</div>
       <label>المحافظة</label><select id="planGov" onchange="renderCrops()"></select>
       <label>المحصول</label><select id="planCrop" onchange="onPlanCropChange()"></select>
@@ -241,7 +241,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 <nav id="bottomnav" style="display:none">
   <button id="nav-add" class="active" onclick="showTab('add')">➕ إضافة زراعة</button>
   <button id="nav-my" onclick="showTab('my')">🌱 محاصيلي</button>
-  <button id="nav-plans" onclick="showTab('plans')">🌾 خطط تسميد لأشهر المحاصيل</button>
+  <button id="nav-plans" onclick="showTab('plans')">🌾 خطط تسميد</button>
   <button id="nav-diag" onclick="showTab('diag')">🔍 أمراض المحاصيل</button>
   <button id="nav-supervision" onclick="showTab('supervision')">🔒 إشراف</button>
   <button id="nav-account" onclick="showTab('account')">👤 حسابي</button>
@@ -261,11 +261,11 @@ const DB_KEY = "mzr_db_v1";
    "تعديل المسميات" في تبويب حسابي، والتغيير يُحفظ في DB.labels ويُطبَّق فورًا. */
 const DEFAULT_LABELS = {
   appTitle:"تطبيق المزارعين", appSubtitle:"زراعة علمية لكل محاصيل مصر — تسميد، تكاليف، وأمراض",
-  tabAdd:"➕ إضافة زراعة", tabMy:"🌱 محاصيلي", tabPlans:"🌾 خطط تسميد لأشهر المحاصيل", tabDiag:"🔍 أمراض المحاصيل", tabSupervision:"🔒 إشراف", tabAccount:"👤 حسابي",
+  tabAdd:"➕ إضافة زراعة", tabMy:"🌱 محاصيلي", tabPlans:"🌾 خطط تسميد", tabDiag:"🔍 أمراض المحاصيل", tabSupervision:"🔒 إشراف", tabAccount:"👤 حسابي",
   supervisionTitle:"إشراف",
   myPlantingsTitle:"محاصيلي", addPlantingTitle:"إضافة زراعة", newPlantingTitle:"زرعة جديدة",
   savePlantingBtn:"حفظ الزرعة وعرض خطة التسميد", cancelBtn:"إلغاء",
-  plansTitle:"خطط تسميد لأشهر المحاصيل", diagTitle:"أمراض المحاصيل", diagnoseBtn:"شخّص المرض",
+  plansTitle:"خطط تسميد", diagTitle:"أمراض المحاصيل", diagnoseBtn:"شخّص المرض",
   accountTitle:"حسابي", adminUsersTitle:"إدارة المستخدمين (للأدمن فقط)", addUserBtn:"إضافة مستخدم",
   logoutBtn:"خروج", loginBtn:"دخول", setupAdminBtn:"إنشاء حساب الأدمن",
   dailyLogTitle:"سجل يومي — أضف ري / تسميد / رش / حصاد", addLogBtn:"إضافة للسجل (تُضاف للتكلفة فورًا)",
@@ -275,7 +275,7 @@ const DEFAULT_LABELS = {
 };
 const LABEL_DESCS = {
   appTitle:"اسم التطبيق (العنوان الرئيسي)", appSubtitle:"الوصف تحت اسم التطبيق",
-  tabAdd:"تبويب إضافة زراعة (شريط التنقل السفلي)", tabMy:"تبويب محاصيلي", tabPlans:"تبويب خطط تسميد لأشهر المحاصيل", tabDiag:"تبويب أمراض المحاصيل", tabSupervision:"تبويب إشراف (🔒 وهو مقفول)", tabAccount:"تبويب حسابي",
+  tabAdd:"تبويب إضافة زراعة (شريط التنقل السفلي)", tabMy:"تبويب محاصيلي", tabPlans:"تبويب خطط تسميد", tabDiag:"تبويب أمراض المحاصيل", tabSupervision:"تبويب إشراف (🔒 وهو مقفول)", tabAccount:"تبويب حسابي",
   supervisionTitle:"عنوان شاشة إشراف",
   myPlantingsTitle:"عنوان شاشة محاصيلي", addPlantingTitle:"عنوان شاشة إضافة زراعة", newPlantingTitle:"عنوان نموذج زرعة جديدة",
   savePlantingBtn:"زر حفظ الزرعة", cancelBtn:"زر إلغاء",
@@ -1000,7 +1000,7 @@ function closeSeason(pid){
 }
 
 /* ===== المحاصيل ===== */
-/* ===== خطط تسميد لأشهر المحاصيل — بفلاتر =====
+/* ===== خطط تسميد — بفلاتر =====
    3 قوائم: المحافظة، المحصول، الصنف/التقاوي — تشتغل مع بعض ومع البحث النصي.
    المحافظة تفلتر للمحاصيل اللي بياناتها بتقول إنها بتتزرع فيها (حقل gov)،
    والمحاصيل اللي حقلها «كل الجمهورية» تظهر مع أي محافظة. الصنف المختار
