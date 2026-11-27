@@ -167,14 +167,31 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
   <section id="tab-diag" class="hidden">
     <div class="card">
       <h2 id="lblDiag">أمراض المحاصيل</h2>
-      <label>المحصول</label><select id="dgCrop"></select>
-      <label>اكتب الأعراض بكلامك</label>
-      <textarea id="dgText" placeholder="مثال: ورق مصفر وبثرات صفراء بودرة على الورقة"></textarea>
-      <label>أو اختر الأعراض الظاهرة</label>
+      <label>المحصول</label><select id="dgCrop" onchange="renderDiagCrop()"></select>
+      <label>المحافظة (اختياري)</label><select id="dgGov" onchange="toggleCustom('dgGov','dgCustomGovBox');suggestDgSoil()"></select>
+      <div id="dgCustomGovBox" class="hidden"><label>اكتب المحافظة / المكان</label><input id="dgCustomGovText" placeholder="مثال: قرية في محافظة أخرى"></div>
+      <label>نوع التربة (اختياري)</label><select id="dgSoil" onchange="toggleCustom('dgSoil','dgCustomSoilBox')"><option>طينية</option><option>رملية</option><option>طميية</option><option>صفراء</option><option>جيرية</option><option>غير ذلك</option><option>لا أعلم</option></select>
+      <div id="dgCustomSoilBox" class="hidden"><label>اكتب نوع التربة</label><input id="dgCustomSoilText" placeholder="مثال: تربة مخلوطة طينية رملية"></div>
+      <div id="dgSoilSuggestNote" style="font-size:16px;color:#1b6b2e"></div>
+      <label>طريقة الري (اختياري)</label><select id="dgIrr" onchange="toggleCustom('dgIrr','dgCustomIrrBox')"><option>غمر</option><option>تنقيط</option><option>رش</option><option>محوري</option><option>غير ذلك</option><option>لا أعلم</option></select>
+      <div id="dgCustomIrrBox" class="hidden"><label>اكتب طريقة الري</label><input id="dgCustomIrrText" placeholder="مثال: ري بالرشاشات اليدوية"></div>
+      <label>نوع التقاوي (اختياري)</label><select id="dgVariety" onchange="toggleCustom('dgVariety','dgCustomVarietyBox')"></select>
+      <div id="dgCustomVarietyBox" class="hidden"><label>اكتب الصنف / التقاوي</label><input id="dgCustomVarietyText" placeholder="مثال: صنف محلي من السوق"></div>
+      <div id="dgDiseaseBox">
+        <label>أمراض المحصول ده — دوس على المرض اللي شكله قريب</label>
+        <div id="dgDiseaseChips"></div>
+        <div id="dgDiseaseDetail"></div>
+        <div id="dgDiseaseNote" class="note hidden"></div>
+      </div>
+      <label>اكتب الأعراض بكلامك (اختياري)</label>
+      <textarea id="dgText" placeholder="مثال: ورق مصفر وبثرات صفراء بودرة على الورقة — وممكن تسيبها فاضية لو هتبعت صور بس"></textarea>
+      <label>أو اختر الأعراض الظاهرة (اختياري)</label>
       <div id="symptomChips"></div>
-      <label>صورة النبات (اختياري)</label>
-      <input type="file" id="dgPhoto" accept="image/*">
-      <img id="dgPreview" class="preview hidden">
+      <label>صور النبات (اختياري — لحد 3 صور، كل صورة أقل من 1.5 ميجا)</label>
+      <input type="file" id="dgPhoto" accept="image/*" multiple>
+      <div id="dgPhotoPreviews"></div>
+      <button type="button" class="secondary" onclick="window.open('https://lens.google.com/upload','_blank')">🔍 ابحث بالصورة على النت (عدسة جوجل)</button>
+      <div class="note" style="font-size:15px">التطبيق نفسه مش بيحلّل الصورة أوتوماتيك — عدسة جوجل هي اللي بتدور بالصورة وتقولك ده مرض إيه، ارفع نفس الصورة هناك.</div>
       <button id="btnDiagnose" onclick="diagnose()">شخّص المرض</button>
       <div id="diagResult"></div>
       <div class="warnbox">التشخيص هنا أولي فقط. أسماء المبيدات والجرعات يجب مطابقتها مع <b>لجنة مبيدات الآفات الزراعية</b> الحالية قبل الاستخدام، والجرعات إرشادية وتُراجع مع الإرشاد الزراعي.</div>
@@ -379,8 +396,9 @@ function saveDB(db){saveLocal(db);schedulePush();}
    - إن كان السيرفر غير متاح (الجداول غير مفعّلة بعد، أو لا يوجد نت) تفشل
      المزامنة بصمت ويبقى التطبيق شغالًا على البيانات المحلية.
    - حدود معروفة في هذه المرحلة: حقول نهاية الموسم (الإنتاجية الفعلية وسعر
-     البيع وإغلاق الموسم) وعلامة الصورة في التشخيص ليست لها أعمدة في جداول
-     Supabase، فتُحفظ محليًا فقط وتُستعاد من النسخة المحلية عند الدمج.
+     البيع وإغلاق الموسم) والصور وسجل التشخيص (المحافظة/التربة/الري/التقاوي)
+     ليست لها أعمدة في جداول Supabase، فتُحفظ محليًا فقط وتُستعاد من النسخة
+     المحلية عند الدمج، وتُصدَّر مع النسخة الاحتياطية (JSON).
      كلمات السر ما زالت SHA-256 محلية حتى النقل إلى Supabase Auth. */
 if(!window.MZR_CONFIG||!window.MZR_CONFIG.supabaseUrl){
   window.MZR_CONFIG={supabaseUrl:"https://pgdvetwwwvzhczruzixu.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnZHZldHd3d3Z6aGN6cnV6aXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU3NDI5MDMsImV4cCI6MjExMTMxODkwM30.fFAhHkIm_EKPNZrdOb-yEbtvr7hwy0wXf4aacod-kTQ"};
@@ -422,7 +440,7 @@ function rowToLog(r){return {id:r.id,plantingId:r.planting_id,type:r.action,opCo
 function saleToRow(s,owner){return {id:s.id,planting_id:s.plantingId,owner_id:owner||null,quantity:(s.qty==null?null:s.qty),quantity_unit:s.qtyUnit||null,amount:Number(s.value||0),note:s.note||null,sale_date:s.date||null};}
 function rowToSale(r){return {id:r.id,plantingId:r.planting_id,qty:(r.quantity==null?null:Number(r.quantity)),qtyUnit:r.quantity_unit||"",value:Number(r.amount||0),note:r.note||"",date:r.sale_date||""};}
 function diagToRow(d){return {id:d.id,owner_id:d.owner,planting_id:null,symptoms:d.text||"",result:d.result||"",photo_url:null};}
-function rowToDiag(r,keep){return {id:r.id,owner:r.owner_id,cropId:(keep?keep.cropId:""),text:r.symptoms||"",result:r.result||"",photo:(keep?!!keep.photo:false),date:r.created_at||(keep?keep.date:"") };}
+function rowToDiag(r,keep){return {id:r.id,owner:r.owner_id,cropId:(keep?keep.cropId:""),text:r.symptoms||"",result:r.result||"",photo:(keep?!!keep.photo:false),photos:(keep&&keep.photos?keep.photos:[]),gov:(keep?keep.gov:""),soil:(keep?keep.soil:""),irr:(keep?keep.irr:""),variety:(keep?keep.variety:""),date:r.created_at||(keep?keep.date:"") };}
 function questionToRow(q){return {id:q.id,owner_id:q.asker,asker_name:q.asker,title:null,question:q.text,answer:q.answer||null,answered_by:q.answeredBy||null};}
 function rowToQuestion(r){return {id:r.id,asker:r.asker_name||r.owner_id,text:r.question,answer:r.answer||null,answeredBy:r.answered_by||null,date:r.created_at||""};}
 function cropEditToRow(k,e){return {crop_id:k,program:{fert:e.fert||"",date:e.date||null},source:e.source||null};}
@@ -819,10 +837,18 @@ function initForms(){
   fillPlanVarieties();
   document.getElementById("npDate").value=new Date().toISOString().slice(0,10);
   fillVarieties();
-  document.getElementById("symptomChips").innerHTML=SYMPTOMS.map(s=>"<span class='chip' data-s='"+esc(s)+"' onclick='this.classList.toggle(\"on\")'>"+esc(s)+"</span>").join("");
+  const dgov=document.getElementById("dgGov");dgov.innerHTML=GOVS.map(g=>"<option>"+g+"</option>").join("")+"<option>غير ذلك</option>";dgov.value="لا أعلم";
+  document.getElementById("dgSoil").value="لا أعلم";
+  document.getElementById("dgIrr").value="لا أعلم";
+  renderDiagCrop();
   document.getElementById("dgPhoto").addEventListener("change",e=>{
-    const f=e.target.files[0];if(!f)return;if(f.size>1500000){alert("الصورة كبيرة — اختر صورة أصغر من 1.5 ميجا حتى تُحفظ في النسخة الاحتياطية.");return;}
-    const r=new FileReader();r.onload=()=>{const im=document.getElementById("dgPreview");im.src=r.result;im.classList.remove("hidden");im.dataset.url=r.result;};r.readAsDataURL(f);
+    const files=Array.from(e.target.files||[]);
+    files.forEach(f=>{
+      if(dgPhotos.length>=3){alert("أقصى 3 صور للتشخيص الواحد.");return;}
+      if(f.size>1500000){alert("الصورة كبيرة — اختر صورة أصغر من 1.5 ميجا حتى تُحفظ في النسخة الاحتياطية.");return;}
+      const r=new FileReader();r.onload=()=>{dgPhotos.push(r.result);renderDgPhotoPreviews();};r.readAsDataURL(f);
+    });
+    e.target.value="";
   });
 }
 function fillVarieties(){
@@ -1044,31 +1070,115 @@ function renderCrops(){
 }
 
 /* ===== أمراض المحاصيل (التشخيص) ===== */
-function diagnose(){
-  const cropId=document.getElementById("dgCrop").value;
-  let c,customNote="";
-  if(cropId==="custom"){c={id:"custom",name:"محصول آخر (غير ذلك)",diseases:[]};customNote="هذا المحصول غير موجود في قاعدة بيانات التطبيق. ابحث عنه على النت من شاشة زراعة جديدة بزر «ابحث على النت»، أو راجع الإرشاد الزراعي.";}
-  else if(cropId==="لا أعلم"){c={id:"unknown",name:"محصول غير محدد",diseases:[].concat(...CROPS.map(x=>x.diseases))};customNote="لم تحدد المحصول — تُعرض أشهر الأمراض من كل المحاصيل. حدّد المحصول لنتيجة أدق.";}
-  else c=cropById(cropId);
-  const text=(document.getElementById("dgText").value||"")+" "+[...document.querySelectorAll("#symptomChips .chip.on")].map(x=>x.dataset.s).join(" ");
-  const photo=document.getElementById("dgPreview").dataset.url||"";
-  if(!text.trim()){alert("اكتب الأعراض أو اختر عرضًا واحدًا على الأقل.");return;}
-  let scored=c.diseases.map(d=>{
+/* حالة التشخيص الحالية: صور (حتى 3) والمرض المختار من أمراض المحصول */
+var dgPhotos=[];
+var dgSelectedDisease=null;
+/* دوال نقية قابلة للاختبار */
+function cropDiseasesFor(cropId){
+  if(cropId==="custom")return {crop:{id:"custom",name:"محصول آخر (غير ذلك)",diseases:[]},note:"هذا المحصول غير موجود في قاعدة بيانات التطبيق — مفيش قائمة أمراض جاهزة له. استخدم الأعراض أو الصور، أو راجع الإرشاد الزراعي."};
+  if(cropId==="لا أعلم")return {crop:{id:"unknown",name:"محصول غير محدد",diseases:[].concat(...CROPS.map(x=>x.diseases))},note:"لم تحدد المحصول — تُعرض أشهر الأمراض من كل المحاصيل. حدّد المحصول لنتيجة أدق."};
+  return {crop:cropById(cropId),note:""};
+}
+/* أعراض قصيرة من نص أعراض أمراض المحصول (تُستخدم كأزرار اختيار) */
+function deriveSymptomPhrases(diseases){
+  const out=[];
+  (diseases||[]).forEach(d=>{
+    String(d.s||"").split(/[،؛]/).forEach(p=>{
+      p=p.trim();
+      if(p&&p.length>2&&p.length<=60&&out.indexOf(p)<0)out.push(p);
+    });
+  });
+  return out.slice(0,10);
+}
+/* قبول صورة: حد أقصى 3 صور، كل صورة أقل من 1.5 ميجا */
+function dgPhotoAccept(count,size){
+  if(count>=3)return {ok:false,reason:"max"};
+  if(size>1500000)return {ok:false,reason:"size"};
+  return {ok:true};
+}
+/* التشخيص يشتغل لو فيه أي مدخل واحد على الأقل */
+function diagHasInput(o){
+  return !!(o&&( (o.text||"").trim() || (o.photos||0)>0 || o.selected ));
+}
+/* ترتيب أمراض المحصول حسب تطابق الأعراض */
+function scoreDiseases(cropId,text){
+  const c=cropDiseasesFor(cropId).crop;
+  return c.diseases.map(d=>{
     let score=0;const hay=d.s+" "+d.n;
     SYMPTOMS.forEach(s=>{if(text.includes(s)&&hay.includes(s))score+=2;});
     ["اصفرار","بقع","بثرات","ذبول","ثقوب","تعفن","تجعد","يرقات","نمو أبيض"].forEach(k=>{if(text.includes(k)&&hay.includes(k))score+=1;});
     return {d,score};
   }).sort((a,b)=>b.score-a.score);
-  const best=scored[0];
+}
+/* اقتراح التربة حسب المحافظة في تبويب التشخيص (نفس اقتراح زراعة جديدة) */
+function suggestDgSoil(){
+  const gov=document.getElementById("dgGov").value;
+  const sug=GOV_SOIL[gov];
+  const note=document.getElementById("dgSoilSuggestNote");
+  if(!sug){if(note)note.textContent="";return;}
+  const soilEl=document.getElementById("dgSoil");
+  soilEl.value=sug;toggleCustom("dgSoil","dgCustomSoilBox");
+  if(note)note.textContent="اقترحنا التربة "+sug+" لأنها الأكثر شيوعًا في "+gov+" — تقدر تغيّرها أو تختار «لا أعلم» أو «غير ذلك».";
+}
+function fillDgVarieties(){
+  const cid=document.getElementById("dgCrop").value;
+  const v=document.getElementById("dgVariety");
+  if(cid==="custom"||cid==="لا أعلم"){v.innerHTML=["لا أعلم","غير ذلك"].map(x=>"<option>"+esc(x)+"</option>").join("");}
+  else{const c=cropById(cid);v.innerHTML=["لا أعلم","غير ذلك"].concat(c.varieties||[]).map(x=>"<option>"+esc(x)+"</option>").join("");}
+  toggleCustom("dgVariety","dgCustomVarietyBox");
+}
+function renderDgPhotoPreviews(){
+  const box=document.getElementById("dgPhotoPreviews");
+  box.innerHTML=dgPhotos.map((p,i)=>"<div style='display:inline-block;position:relative;margin:4px'><img src='"+p+"' class='preview' style='max-width:110px;max-height:110px'><button type='button' class='small warn' style='position:absolute;top:0;left:0' onclick='removeDgPhoto("+i+")'>✕</button></div>").join("");
+}
+function removeDgPhoto(i){dgPhotos.splice(i,1);renderDgPhotoPreviews();}
+function selectDgDisease(idx){
+  const ctx=cropDiseasesFor(document.getElementById("dgCrop").value);
+  const d=ctx.crop.diseases[idx];if(!d)return;
+  dgSelectedDisease=d.n;
+  document.querySelectorAll("#dgDiseaseChips .chip").forEach((el,i)=>el.classList.toggle("on",i===idx));
+  document.getElementById("dgDiseaseDetail").innerHTML="<div class='card' style='margin:8px 0'><h3>"+esc(d.n)+"</h3><p><b>الأعراض:</b> "+esc(d.s)+"</p><p><b>الحل المقترح:</b> "+esc(d.t)+"</p></div>";
+}
+/* يعيد رسم أمراض المحصول وأعراضه وأصنافه عند تغيير المحصول */
+function renderDiagCrop(){
+  const ctx=cropDiseasesFor(document.getElementById("dgCrop").value);
+  dgSelectedDisease=null;
+  document.getElementById("dgDiseaseDetail").innerHTML="";
+  const noteEl=document.getElementById("dgDiseaseNote");
+  if(ctx.note){noteEl.textContent=ctx.note;noteEl.classList.remove("hidden");}else{noteEl.textContent="";noteEl.classList.add("hidden");}
+  document.getElementById("dgDiseaseChips").innerHTML=ctx.crop.diseases.map((d,i)=>"<span class='chip' onclick='selectDgDisease("+i+")'>"+esc(d.n)+"</span>").join("")||"<span style='font-size:16px;color:#777'>لا توجد قائمة أمراض جاهزة — استخدم الأعراض أو الصور.</span>";
+  const phrases=deriveSymptomPhrases(ctx.crop.diseases);
+  const chips=(phrases.length?phrases:SYMPTOMS);
+  document.getElementById("symptomChips").innerHTML=chips.map(s=>"<span class='chip' data-s='"+esc(s)+"' onclick='this.classList.toggle(\"on\")'>"+esc(s)+"</span>").join("");
+  fillDgVarieties();
+}
+function diagnose(){
+  const cropId=document.getElementById("dgCrop").value;
+  const ctx=cropDiseasesFor(cropId);
+  const c=ctx.crop;
+  const text=(document.getElementById("dgText").value||"")+" "+[...document.querySelectorAll("#symptomChips .chip.on")].map(x=>x.dataset.s).join(" ");
+  const photos=dgPhotos.slice();
+  const selected=dgSelectedDisease;
+  if(!diagHasInput({text:text,photos:photos.length,selected:selected})){
+    document.getElementById("diagResult").innerHTML="<div class='card'>اختار مرض أو اكتب عرض أو ابعت صورة على الأقل عشان أقدر أشخّص.</div>";return;
+  }
+  let best=null;
+  if(selected){const found=c.diseases.find(d=>d.n===selected);if(found)best={d:found,score:99};}
+  if(!best){const scored=scoreDiseases(cropId,text);best=scored[0];}
+  const gov=resolveOther("dgGov","dgCustomGovText"),soil=resolveOther("dgSoil","dgCustomSoilText"),irr=resolveOther("dgIrr","dgCustomIrrText"),variety=resolveOther("dgVariety","dgCustomVarietyText");
   const u=currentUser();
-  DB.diagnoses.push({id:"d"+Date.now(),owner:u?u.username:"",cropId,text:text.trim(),result:best?best.d.n:"لا توجد مطابقة واضحة",photo:photo?true:false,date:new Date().toISOString()});
+  const resultName=selected||(best&&best.score>0?best.d.n:(photos.length?"تشخيص بالصور فقط — ارفع الصورة على عدسة جوجل":"لا توجد مطابقة واضحة"));
+  DB.diagnoses.push({id:"d"+Date.now(),owner:u?u.username:"",cropId,text:text.trim(),result:resultName,photo:photos.length>0,photos:photos,gov:gov,soil:soil,irr:irr,variety:variety,date:new Date().toISOString()});
   saveDB(DB);
+  const ctxLine=[["المحافظة",gov],["التربة",soil],["الري",irr],["التقاوي",variety]].filter(x=>x[1]&&x[1]!=="لا أعلم").map(x=>"<b>"+x[0]+":</b> "+esc(x[1])).join(" | ");
   let h="<div class='card'>";
-  if(customNote)h+="<div class='note'>"+esc(customNote)+"</div>";
+  if(ctx.note)h+="<div class='note'>"+esc(ctx.note)+"</div>";
+  if(ctxLine)h+="<p>"+ctxLine+"</p>";
   if(best&&best.score>0){h+="<h3>الأقرب لتشخيصك: "+esc(best.d.n)+"</h3><p><b>الأعراض:</b> "+esc(best.d.s)+"</p><p><b>الحل المقترح:</b> "+esc(best.d.t)+"</p>";}
+  else if(photos.length){h+="<h3>تم حفظ التشخيص بالصور ("+photos.length+" "+(photos.length===1?"صورة":"صور")+")</h3><p>التطبيق مش بيحلّل الصورة أوتوماتيك — دوس على زر «ابحث بالصورة على النت (عدسة جوجل)» فوق وارفع نفس الصورة هناك، وهي هتقولك ده مرض إيه.</p>";}
   else{h+="<h3>لا توجد مطابقة واضحة من الأعراض المكتوبة</h3><p>جرّب إضافة تفاصيل أكثر (لون البقع، مكانها على الورقة أو الساق، هل يوجد بودرة أو نمو أبيض؟)، أو أضف صورة، أو راجع الإرشاد الزراعي.</p>";}
   h+="<p><b>أمراض "+esc(c.name)+" الشائعة:</b></p><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul>";
-  if(photo)h+="<p>تم حفظ الصورة مع التشخيص (ستُصدَّر مع النسخة الاحتياطية).</p>";
+  if(photos.length)h+="<p>تم حفظ "+photos.length+" "+(photos.length===1?"صورة":"صور")+" مع التشخيص (تُصدَّر مع النسخة الاحتياطية).</p>";
   h+="<p style='font-size:16px'>⚠️ التشخيص أولي. المبيدات والجرعات تُطابَق مع لجنة مبيدات الآفات الزراعية قبل الاستخدام.</p></div>";
   document.getElementById("diagResult").innerHTML=h;
 }
