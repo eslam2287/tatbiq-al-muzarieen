@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b6b2e">
+<meta name="description" content="تطبيق المزارعين — خطط زراعة وتسميد وتكاليف وتشخيص أمراض لكل محاصيل مصر">
+<title>تطبيق المزارعين</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<style>
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;background:#f2f7f0;color:#16241a;margin:0;font-size:19px;line-height:1.6}
+header{background:#1b6b2e;color:#fff;padding:16px 14px 12px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:4px 0 0;font-size:16px;opacity:.92}
+.wrap{max-width:760px;margin:0 auto;padding:12px 12px 90px}
+.card{background:#fff;border:1px solid #d8e5d3;border-radius:14px;padding:16px;margin:12px 0}
+h2{font-size:23px;margin:0 0 10px}
+h3{font-size:20px;margin:14px 0 6px}
+label{display:block;font-weight:700;margin:12px 0 4px;font-size:18px}
+input,select,textarea{width:100%;padding:14px;font-size:19px;border:2px solid #b9cdb2;border-radius:12px;background:#fff}
+textarea{min-height:90px}
+button{width:100%;padding:16px;font-size:20px;font-weight:700;border:0;border-radius:14px;background:#1b6b2e;color:#fff;margin:8px 0;cursor:pointer}
+button.secondary{background:#e8f0e4;color:#1b6b2e;border:2px solid #1b6b2e}
+button.warn{background:#8a1f1f}
+button.small{width:auto;padding:10px 16px;font-size:17px;margin:4px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.badge{display:inline-block;background:#e3f2dc;color:#1b6b2e;border-radius:20px;padding:4px 12px;font-size:15px;margin:2px}
+.badge.red{background:#fbe3e3;color:#8a1f1f}
+.badge.grey{background:#eee;color:#444}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #1b6b2e;display:flex;z-index:10}
+nav button{flex:1;background:#fff;color:#1b6b2e;border-radius:0;margin:0;padding:13px 2px;font-size:17px}
+nav button.active{background:#1b6b2e;color:#fff}
+.hidden{display:none!important}
+.note{background:#fff8d6;border:1px solid #e3c84b;border-radius:12px;padding:12px;margin:12px 0;font-size:17px}
+.warnbox{background:#fdecea;border:1px solid #d99;border-radius:12px;padding:12px;margin:12px 0;font-size:17px}
+table{width:100%;border-collapse:collapse;font-size:17px}
+td,th{border:1px solid #ddd;padding:8px;text-align:right;vertical-align:top}
+.plant{border:2px solid #cfe3c6;border-radius:12px;padding:12px;margin:10px 0;background:#fbfff8}
+.total{font-size:24px;font-weight:800}
+img.preview{max-width:100%;border-radius:12px;margin-top:8px}
+.chip{display:inline-block;border:2px solid #1b6b2e;border-radius:20px;padding:8px 14px;margin:4px;font-size:17px;background:#fff;cursor:pointer}
+.chip.on{background:#1b6b2e;color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:16px}
+.topbar button{width:auto;padding:8px 14px;font-size:16px;margin:0}
+</style>
+</head>
+<body>
+<header>
+<h1 id="appTitle">🌱 تطبيق المزارعين</h1>
+<p id="appSubtitle">زراعة علمية لكل محاصيل مصر — تسميد، تكاليف، وأمراض</p>
+</header>
+<div class="wrap">
+
+<div class="topbar" id="topbar" style="display:none">
+  <span id="whoami"></span>
+  <span id="netstat"></span>
+  <button class="secondary" id="btnLogout" onclick="logout()">خروج</button>
+</div>
+
+<div class="note" id="syncNote">
+  <b>مهم عن المزامنة:</b> هذه النسخة العامة تحفظ بياناتك على هذا الموبايل (أوفلاين أولًا).
+  لنقل بياناتك لموبايل آخر استخدم <b>تصدير / استيراد نسخة احتياطية (JSON)</b> من تبويب «حسابي».
+  المزامنة التلقائية الكاملة بين الأجهزة تحتاج قاعدة بيانات سحابية مجانية — التفاصيل في ملف README.
+</div>
+
+<!-- ===== تسجيل الدخول ===== -->
+<div class="card" id="authCard">
+  <h2 id="authTitle">تسجيل الدخول</h2>
+  <div id="setupBox" class="hidden">
+    <div class="note">أول مرة تفتح التطبيق: أنشئ حساب <b>الأدمن</b> (أنت). احفظ اسم المستخدم وكلمة السر جيدًا — الأدمن هو الذي يضيف باقي المزارعين.</div>
+    <label>اسم مستخدم الأدمن</label><input id="setupUser" autocomplete="username">
+    <label>كلمة السر</label><input id="setupPass" type="password" autocomplete="new-password">
+    <button id="btnSetupAdmin" onclick="setupAdmin()">إنشاء حساب الأدمن</button>
+  </div>
+  <div id="loginBox">
+    <label>اسم المستخدم</label><input id="loginUser" autocomplete="username">
+    <label>كلمة السر</label><input id="loginPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+    <button id="btnLogin" onclick="login()">دخول</button>
+    <button class="secondary" onclick="document.getElementById('registerBox').classList.toggle('hidden')">إنشاء حساب جديد</button>
+    <div id="loginErr" style="color:#8a1f1f;font-weight:700"></div>
+    <div id="registerBox" class="hidden" style="border-top:2px dashed #b9cdb2;margin-top:12px;padding-top:12px">
+      <div class="note">أي حد معاه اللينك يقدر يعمل حساب بنفسه — بس الحساب مش هيدخل لحد ما الأدمن يوافق عليه.</div>
+      <label>اسم مستخدم جديد</label><input id="regUser" autocomplete="username">
+      <label>كلمة السر</label><input id="regPass" type="password" autocomplete="new-password">
+      <button class="secondary" onclick="registerUser()">إرسال طلب إنشاء الحساب</button>
+      <div id="regMsg" style="font-weight:700"></div>
+    </div>
+    <div class="note">كل مزارع يدخل باسمه وكلمة سره. المزارع يرى زراعاته وبياناته هو فقط، والأدمن يرى بيانات الكل.</div>
+  </div>
+</div>
+
+<!-- ===== التطبيق ===== -->
+<div id="app" class="hidden">
+  <div id="subBanner" class="warnbox hidden" style="margin:10px"></div>
+
+  <!-- زرعاتي -->
+  <section id="tab-plantings">
+    <div class="card">
+      <h2 id="lblMyPlantings">زرعاتي</h2>
+      <div>إجمالي ما صرفته حتى الآن: <span class="total" id="myTotal">0 جنيه</span></div>
+      <button id="btnNewPlanting" onclick="showNewPlanting()">+ سجّل زرعة جديدة</button>
+    </div>
+    <div id="newPlanting" class="card hidden">
+      <h3 id="lblNewPlanting">زرعة جديدة</h3>
+      <label>المحافظة * <button type="button" class="small secondary" onclick="setField('npGov','لا أعلم')">لا أعلم</button></label>
+      <select id="npGov" onchange="toggleCustom('npGov','customGovBox');suggestSoil()"></select>
+      <div id="customGovBox" class="hidden"><label>اكتب المحافظة / المكان</label><input id="customGovText" placeholder="مثال: قرية في محافظة أخرى"></div>
+      <label>المحصول * (إجباري)</label>
+      <select id="npCrop" onchange="onCropChange()"></select>
+      <div id="customCropBox" class="hidden" style="background:#f0f7ee;border:2px dashed #1b6b2e;border-radius:12px;padding:12px;margin-top:8px">
+        <label>اسم المحصول (اكتبه بنفسك)</label>
+        <input id="customCropName" placeholder="مثال: كركديه">
+        <label>الشرح / الوصف (اختياري)</label>
+        <textarea id="customCropDesc" placeholder="مثال: محصول صيفي يُزرع في أرض رملية في الصعيد"></textarea>
+        <button type="button" onclick="searchCustomCrop()">🔍 ابحث على النت عن خطة زراعته وتسميده</button>
+        <div id="customCropSearchResult" style="font-size:16px"></div>
+        <label>الصق هنا ملخص الخطة التي وجدتها على النت (اختياري — ستظهر كخطة التسميد لهذه الزرعة)</label>
+        <textarea id="customCropPlan" placeholder="مثال: سوبر فوسفات 150 كجم/فدان قبل الزراعة + آزوت على دفعتين..."></textarea>
+      </div>
+      <label>الصنف / التقاوي <button type="button" class="small secondary" onclick="setField('npVariety','لا أعلم')">لا أعلم</button></label>
+      <select id="npVariety" onchange="toggleCustom('npVariety','customVarietyBox')"></select>
+      <div id="customVarietyBox" class="hidden"><label>اكتب الصنف / التقاوي</label><input id="customVarietyText" placeholder="مثال: صنف محلي من السوق"></div>
+      <label>نوع التربة <button type="button" class="small secondary" onclick="setField('npSoil','لا أعلم')">لا أعلم</button></label>
+      <select id="npSoil" onchange="toggleCustom('npSoil','customSoilBox')"><option>طينية</option><option>رملية</option><option>طميية</option><option>صفراء</option><option>جيرية</option><option>غير ذلك</option><option>لا أعلم</option></select>
+      <div id="customSoilBox" class="hidden"><label>اكتب نوع التربة</label><input id="customSoilText" placeholder="مثال: تربة مخلوطة طينية رملية"></div>
+      <div id="soilSuggestNote" style="font-size:16px;color:#1b6b2e"></div>
+      <label>طريقة الري <button type="button" class="small secondary" onclick="setField('npIrr','لا أعلم')">لا أعلم</button></label>
+      <select id="npIrr" onchange="toggleCustom('npIrr','customIrrBox')"><option>غمر</option><option>تنقيط</option><option>رش</option><option>محوري</option><option>غير ذلك</option><option>لا أعلم</option></select>
+      <div id="customIrrBox" class="hidden"><label>اكتب طريقة الري</label><input id="customIrrText" placeholder="مثال: ري بالرشاشات اليدوية"></div>
+      <label>المساحة المزروعة</label>
+      <div class="row"><input id="npArea" type="number" min="0" step="any" placeholder="مثال: 12">
+      <select id="npUnit"><option value="فدان">فدان</option><option value="قيراط">قيراط</option><option value="لا أعلم">لا أعلم</option></select></div>
+      <div style="font-size:16px;color:#555">الفدان = 24 قيراط. مثال: 12 قيراط = 0.5 فدان. التسميد والتكلفة والإنتاجية تُحسب بالفدان.</div>
+      <label>تاريخ الزراعة</label><input id="npDate" type="date">
+      <button id="btnSavePlanting" onclick="savePlanting()">حفظ الزرعة وعرض خطة التسميد</button>
+      <button class="secondary" id="btnCancelPlanting" onclick="document.getElementById('newPlanting').classList.add('hidden')">إلغاء</button>
+    </div>
+    <div id="plantingList"></div>
+  </section>
+
+  <!-- المحاصيل -->
+  <section id="tab-crops" class="hidden">
+    <div class="card">
+      <h2 id="lblCrops">المحاصيل (30 محصولًا)</h2>
+      <input id="cropSearch" placeholder="ابحث: قمح، قلقاس، ذرة..." oninput="renderCrops()">
+      <div id="cropList"></div>
+    </div>
+  </section>
+
+  <!-- التشخيص -->
+  <section id="tab-diag" class="hidden">
+    <div class="card">
+      <h2 id="lblDiag">أمراض المحاصيل</h2>
+      <label>المحصول</label><select id="dgCrop"></select>
+      <label>اكتب الأعراض بكلامك</label>
+      <textarea id="dgText" placeholder="مثال: ورق مصفر وبثرات صفراء بودرة على الورقة"></textarea>
+      <label>أو اختر الأعراض الظاهرة</label>
+      <div id="symptomChips"></div>
+      <label>صورة النبات (اختياري)</label>
+      <input type="file" id="dgPhoto" accept="image/*">
+      <img id="dgPreview" class="preview hidden">
+      <button id="btnDiagnose" onclick="diagnose()">شخّص المرض</button>
+      <div id="diagResult"></div>
+      <div class="warnbox">التشخيص هنا أولي فقط. أسماء المبيدات والجرعات يجب مطابقتها مع <b>لجنة مبيدات الآفات الزراعية</b> الحالية قبل الاستخدام، والجرعات إرشادية وتُراجع مع الإرشاد الزراعي.</div>
+    </div>
+  </section>
+
+  <!-- إشراف -->
+  <section id="tab-supervision" class="hidden">
+    <div class="card">
+      <h2 id="lblSupervision">إشراف</h2>
+      <div id="supervisionBody"></div>
+    </div>
+  </section>
+
+  <!-- حسابي -->
+  <section id="tab-account" class="hidden">
+    <div class="card">
+      <h2 id="lblAccount">حسابي</h2>
+      <div id="accountInfo"></div>
+    </div>
+    <div class="card" id="adminCard" style="display:none">
+      <h2 id="lblAdminUsers">إدارة المستخدمين (للأدمن فقط)</h2>
+      <label>اسم مستخدم جديد</label><input id="nuUser">
+      <label>كلمة سر</label><input id="nuPass" type="password">
+      <label>الدور</label><select id="nuRole"><option value="farmer">مزارع</option><option value="supervisor">مشرف (مهندس زراعي — يجاوب على أسئلة الإشراف)</option><option value="admin">أدمن</option></select>
+      <button id="btnAddUser" onclick="addUser()">إضافة مستخدم</button>
+      <div id="userList"></div>
+      <h3>طلبات إنشاء حساب معلقة (في انتظار موافقتك)</h3>
+      <div style="font-size:17px">أي حد معاه اللينك يقدر يطلب حساب من شاشة الدخول بزر «إنشاء حساب جديد». الطلب يفضل معلقًا ولا يدخل صاحبه لحد ما تقبل أو ترفض من هنا.</div>
+      <div id="pendingList"></div>
+      <h3>قسم الإشراف (فتح / قفل)</h3>
+      <div style="font-size:17px">قسم «إشراف» ظاهر لكل المستخدمين لكنه مقفول لحد ما تفتحه انت من هنا. لما تفتحه يقدر المزارعون يسألوا أسئلتهم، والمهندس الزراعي (دور «مشرف») يجاوب عليها.</div>
+      <div id="supControl"></div>
+      <h3>تعديل بيانات المحاصيل (للأدمن)</h3>
+      <div style="font-size:17px">جرعات التسميد في التطبيق إرشادية. عند صدور نشرة جديدة، عدّلها هنا وسيُحفظ التعديل مع تاريخه ومصدره. (التعديلات تُحفظ في نسختك الاحتياطية JSON).</div>
+      <label>المحصول</label><select id="edCrop" onchange="loadCropEdit()"></select>
+      <label>برنامج التسميد (نص حر يُعرض للمزارعين)</label>
+      <textarea id="edFert" style="min-height:130px"></textarea>
+      <label>المصدر والتاريخ</label><input id="edSource" placeholder="مثال: نشرة الإرشاد 2027">
+      <button onclick="saveCropEdit()">حفظ التعديل</button>
+      <h3>تعديل المسميات (للأدمن)</h3>
+      <div style="font-size:17px">من هنا تقدر تغيّر أسماء العناوين والأزرار والتبويبات بنفسك — مثال: غيّر «زرعة جديدة» إلى «إنشاء زراعة». اكتب الاسم الجديد في الخانة، والتغيير يُطبَّق فورًا ويُحفظ على جهازك (ويُصدَّر مع النسخة الاحتياطية). اترك الخانة فاضية لترجع للاسم الأصلي.</div>
+      <div id="labelList"></div>
+      <button class="secondary" onclick="resetLabels()">إرجاع المسميات الأصلية</button>
+    </div>
+    <div class="card">
+      <h2>نسخة احتياطية ومزامنة بين الأجهزة</h2>
+      <p style="font-size:17px">هذه النسخة العامة لا تُزامن تلقائيًا بدون سيرفر سحابي. لنقل بيانات حسابك لموبايل آخر: صدّر نسخة من هنا، ثم افتح التطبيق على الموبايل الثاني وسجّل الدخول بنفس اسم المستخدم، ثم استورد الملف.</p>
+      <button id="btnExport" onclick="exportBackup()">⬇ تصدير نسخة احتياطية (JSON)</button>
+      <label>استيراد نسخة احتياطية</label>
+      <input type="file" id="importFile" accept="application/json" onchange="importBackup(event)">
+      <button class="secondary" onclick="if(confirm('سيتم مسح كل بيانات هذا الجهاز. متأكد؟')){localStorage.removeItem(DB_KEY);location.reload()}">مسح بيانات هذا الجهاز</button>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<nav id="bottomnav" style="display:none">
+  <button id="nav-plantings" class="active" onclick="showTab('plantings')">🌱 زرعاتي</button>
+  <button id="nav-crops" onclick="showTab('crops')">🌾 المحاصيل</button>
+  <button id="nav-diag" onclick="showTab('diag')">🔍 أمراض المحاصيل</button>
+  <button id="nav-supervision" onclick="showTab('supervision')">🛡 إشراف</button>
+  <button id="nav-account" onclick="showTab('account')">👤 حسابي</button>
+</nav>
+
+<script>
+"use strict";
+/* ================= تطبيق المزارعين — نسخة عامة مستقلة =================
+   بيانات محفوظة على الجهاز (localStorage) — أوفلاين أولًا.
+   كلمات السر تُحفظ بصيغة SHA-256 (ليست كلمة السر نفسها). هذا مستوى حماية
+   مناسب للنسخة التجريبية على جهاز واحد، وليس بديلًا عن سيرفر آمن للإنتاج.
+   المزامنة التلقائية الكاملة تحتاج Supabase/Firebase — انظر README.md.
+*/
+const DB_KEY = "mzr_db_v1";
+/* ===== المسميات القابلة للتعديل من الأدمن =====
+   كل عنوان/زر في التطبيق له مفتاح هنا. الأدمن يغيّر النص من قسم
+   "تعديل المسميات" في تبويب حسابي، والتغيير يُحفظ في DB.labels ويُطبَّق فورًا. */
+const DEFAULT_LABELS = {
+  appTitle:"تطبيق المزارعين", appSubtitle:"زراعة علمية لكل محاصيل مصر — تسميد، تكاليف، وأمراض",
+  tabPlantings:"🌱 زرعاتي", tabCrops:"🌾 المحاصيل", tabDiag:"🔍 أمراض المحاصيل", tabSupervision:"🛡 إشراف", tabAccount:"👤 حسابي",
+  supervisionTitle:"إشراف",
+  myPlantingsTitle:"زرعاتي", newPlantingBtn:"+ سجّل زرعة جديدة", newPlantingTitle:"زرعة جديدة",
+  savePlantingBtn:"حفظ الزرعة وعرض خطة التسميد", cancelBtn:"إلغاء",
+  cropsTitle:"المحاصيل (30 محصولًا)", diagTitle:"أمراض المحاصيل", diagnoseBtn:"شخّص المرض",
+  accountTitle:"حسابي", adminUsersTitle:"إدارة المستخدمين (للأدمن فقط)", addUserBtn:"إضافة مستخدم",
+  logoutBtn:"خروج", loginBtn:"دخول", setupAdminBtn:"إنشاء حساب الأدمن",
+  dailyLogTitle:"سجل يومي — أضف ري / تسميد / رش / حصاد", addLogBtn:"إضافة للسجل (تُضاف للتكلفة فورًا)",
+  seasonTitle:"نهاية الموسم — الربح والخسارة", calcProfitBtn:"احسب الربح / الخسارة والتوصيات",
+  salesTitle:"المبيعات — أضف بيعة ورا بيعة", addSaleBtn:"إضافة بيعة",
+  exportBtn:"⬇ تصدير نسخة احتياطية (JSON)", viewPlanBtn:"عرض الخطة والسجل"
+};
+const LABEL_DESCS = {
+  appTitle:"اسم التطبيق (العنوان الرئيسي)", appSubtitle:"الوصف تحت اسم التطبيق",
+  tabPlantings:"تبويب زرعاتي (شريط التنقل السفلي)", tabCrops:"تبويب المحاصيل", tabDiag:"تبويب أمراض المحاصيل", tabSupervision:"تبويب إشراف", tabAccount:"تبويب حسابي",
+  supervisionTitle:"عنوان شاشة إشراف",
+  myPlantingsTitle:"عنوان شاشة زرعاتي", newPlantingBtn:"زر إضافة زرعة جديدة", newPlantingTitle:"عنوان نموذج زرعة جديدة",
+  savePlantingBtn:"زر حفظ الزرعة", cancelBtn:"زر إلغاء",
+  cropsTitle:"عنوان شاشة المحاصيل", diagTitle:"عنوان شاشة أمراض المحاصيل", diagnoseBtn:"زر شخّص المرض",
+  accountTitle:"عنوان شاشة حسابي", adminUsersTitle:"عنوان إدارة المستخدمين", addUserBtn:"زر إضافة مستخدم",
+  logoutBtn:"زر خروج", loginBtn:"زر دخول", setupAdminBtn:"زر إنشاء حساب الأدمن",
+  dailyLogTitle:"عنوان السجل اليومي", addLogBtn:"زر إضافة للسجل",
+  seasonTitle:"عنوان نهاية الموسم", calcProfitBtn:"زر حساب الربح / الخسارة",
+  salesTitle:"عنوان قسم المبيعات", addSaleBtn:"زر إضافة بيعة",
+  exportBtn:"زر تصدير نسخة احتياطية", viewPlanBtn:"زر عرض الخطة والسجل"
+};
+function L(k){return (DB.labels&&DB.labels[k])||DEFAULT_LABELS[k]||k;}
+function applyLabels(){
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  document.title=L("appTitle");
+  set("appTitle",L("appTitle")); set("appSubtitle",L("appSubtitle"));
+  set("nav-plantings",L("tabPlantings")); set("nav-crops",L("tabCrops")); set("nav-diag",L("tabDiag")); set("nav-account",L("tabAccount"));
+  set("lblMyPlantings",L("myPlantingsTitle")); set("btnNewPlanting",L("newPlantingBtn")); set("lblNewPlanting",L("newPlantingTitle"));
+  set("btnSavePlanting",L("savePlantingBtn")); set("btnCancelPlanting",L("cancelBtn"));
+  set("lblCrops",L("cropsTitle")); set("lblDiag",L("diagTitle")); set("btnDiagnose",L("diagnoseBtn"));
+  set("lblAccount",L("accountTitle")); set("lblAdminUsers",L("adminUsersTitle")); set("btnAddUser",L("addUserBtn"));
+  set("btnLogout",L("logoutBtn")); set("btnLogin",L("loginBtn")); set("btnSetupAdmin",L("setupAdminBtn")); set("btnExport",L("exportBtn"));
+}
+function saveLabel(k,v){ if(!DB.labels)DB.labels={}; const t=(v||"").trim(); if(t)DB.labels[k]=t; else delete DB.labels[k]; saveDB(DB); applyLabels(); renderPlantings(); }
+function resetLabels(){ if(!confirm("إرجاع كل المسميات للنصوص الأصلية؟"))return; DB.labels={}; saveDB(DB); applyLabels(); renderLabelEditor(); renderPlantings(); alert("تم إرجاع المسميات الأصلية."); }
+function renderLabelEditor(){
+  const el=document.getElementById("labelList"); if(!el)return;
+  el.innerHTML=Object.keys(DEFAULT_LABELS).map(k=>"<label>"+esc(LABEL_DESCS[k]||k)+"</label><input data-label-key='"+k+"' value='"+esc(L(k))+"' onchange=\"saveLabel('"+k+"',this.value)\" placeholder='"+esc(DEFAULT_LABELS[k])+"'>").join("");
+}
+const SESSION_KEY = "mzr_session_v1";
+const QIRAT_PER_FEDDAN = 24;
+
+/* ===== قاعدة المحاصيل — من ~/workspace/farmer-app/research/crops-database.md (بحث 27 نوفمبر 2026) =====
+   كل الجرعات إرشادية بالفدان ومصدرها نشرات وزارة الزراعة / الإرشاد / مركز البحوث.
+   تعارضات موثقة صراحة (قلقاس، أرز، بطاطس، بنجر، برسيم) — لا تُعرض كرقم واحد محسوم. */
+const GOVS = ["المنوفية","شرق العوينات","القاهرة","الجيزة","القليوبية","الشرقية","الدقهلية","البحيرة","الغربية","كفر الشيخ","دمياط","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","الوادي الجديد","مطروح","سيناء","الإسماعيلية","السويس","بورسعيد","البحر الأحمر","لا أعلم"];
+const CROPS = [
+{id:"qalqas",name:"القلقاس",season:"صيفي (7–9 أشهر)",planting:"منتصف فبراير – آخر أبريل، الأفضل مارس. الحصاد أكتوبر–نوفمبر",soil:"صفراء ثقيلة/خفيفة جيدة الصرف؛ لا يجود في الرملية والجيرية",irrigation:"غمر غزير متقارب؛ كل أسبوعين ثم كل أسبوع في يونيو ثم كل 4–5 أيام في يوليو؛ يُمنع الري قبل الحصاد بـ3 أسابيع",gov:"المنوفية (شنوان — الأكبر في مصر)، القليوبية، الشرقية، البحيرة",varieties:["المصري (كورمة كبيرة، 9 شهور)","الأمريكي (كورمات صغيرة، 7 شهور)"],yield:"8–12 طن/فدان (متوسط المنوفية الأحدث 14.6 طن/فدان)",priority:true,
+ fert:"دليل المزارع — المنوفية: سماد بلدي 40 م³ + 200 كجم سوبر فوسفات + 100–150 كجم سلفات نشادر + 100 كجم سلفات بوتاسيوم بعد الإنبات وتُعاد في يوليو. ⚠️ تعارض موثق لم يُحسم: مصادر أخرى تذكر 200 كجم سلفات نشادر، وثالثة تذكر 300 كجم — راجع الإرشاد الزراعي قبل الاعتماد.",
+ steps:[{day:0,label:"تجهيز: سماد بلدي 40 م³ + سوبر فوسفات 200 كجم/فدان",perFeddan:200,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد الإنبات: سلفات نشادر 100–150 كجم/فدان (تعارض موثق: مصادر أخرى 200 و300 كجم)",perFeddan:125,unit:"كجم سلفات نشادر"},{day:120,label:"تكتيف يوليو: سلفات بوتاسيوم 100 كجم/فدان + باقي النشادر",perFeddan:100,unit:"كجم سلفات بوتاسيوم"}],
+ diseases:[{n:"لفحة الأوراق (الندوة المتأخرة)",s:"بقع بنية بنفسجية على حواف الورق مع إفرازات صمغية",t:"تقاوي سليمة + صرف جيد + دورة زراعية. المبيد حسب لجنة المبيدات."},{n:"العفن الطري",s:"تعفن الكورمات",t:"صرف جيد وعدم التغريق. المبيد حسب لجنة المبيدات."},{n:"نيماتودا تعقد الجذور",s:"عقد على الجذور وضعف نمو وذبول",t:"دورة زراعية ثلاثية أو خماسية. المبيد حسب لجنة المبيدات."}]},
+{id:"wheat",name:"القمح",season:"شتوي",planting:"الوجه البحري: النصف الثاني من نوفمبر حتى أوائل ديسمبر",soil:"طينية خصبة جيدة الصرف",irrigation:"غمر: 4–5 ريات؛ رية المحاياة بعد 20–25 يومًا",gov:"كل الجمهورية؛ المنوفية، الشرقية، البحيرة، الدقهلية",varieties:["مصر 3","مصر 4","مصر 5","جيزة 171","سخا 95","سخا 96","سخا 97","سدس 15"],yield:"حسب الصنف والخدمة — راجع نشرة الموسم",priority:true,
+ fert:"نشرة وزارة الزراعة/الإرشاد: فوسفور 15 كجم (100 كجم سوبر فوسفات) قبل آخر حرثة + بوتاسيوم 50 كجم سلفات بوتاسيوم عند التجهيز + 25 كجم بعد 100 يوم + آزوت 75 كجم N (163 كجم يوريا) على 3 دفعات: 20% عند الزراعة، 40% عند المحاياة، 40% عند الرية التالية. في الرملية: سوبر فوسفات 200 كجم/فدان.",
+ steps:[{day:0,label:"قبل الزراعة: سوبر فوسفات 100 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان + 20% من الآزوت (33 كجم يوريا/فدان)",perFeddan:33,unit:"كجم يوريا"},{day:22,label:"رية المحاياة: 40% من الآزوت (65 كجم يوريا/فدان)",perFeddan:65,unit:"كجم يوريا"},{day:47,label:"الرية التالية (حمل السنابل): 40% من الآزوت (65 كجم يوريا/فدان)",perFeddan:65,unit:"كجم يوريا"},{day:100,label:"سلفات بوتاسيوم ذواب 25 كجم/فدان مع مياه الري",perFeddan:25,unit:"كجم سلفات بوتاسيوم"}],
+ diseases:[{n:"الصدأ الأصفر (الأخطر)",s:"بثرات صفراء مسحوقية في خطوط طولية على الورقة، بودرة صفراء على الأصابع",t:"أصناف مقاومة أولًا + مبيد (تيبوكونازول/ديفينوكونازول/أزوكسي ستروبين) حسب لجنة المبيدات."},{n:"الصدأ البرتقالي",s:"بثرات بنية فاتحة مستديرة مبعثرة على الأوراق",t:"نفس مبيدات الأصداء حسب اللجنة."},{n:"البياض الدقيقي",s:"بقع بيضاء قطنية تتحول للرمادي مع اصفرار",t:"اعتدال الآزوت + مبيد حسب اللجنة."},{n:"المن",s:"اصفرار قمة الأوراق وتقزم النبات",t:"مكافحة المن (ينقل فيروس التقزم الأصفر)."}]},
+{id:"maize",name:"الذرة الشامية",season:"صيفي",planting:"الدلتا: مايو – منتصف يونيو. شرق العوينات: أول مارس و15 يوليو – 15 أغسطس",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط / رش محوري. المحاياة بعد 18–21 يومًا",gov:"كل الجمهورية",varieties:["جيزة 10","جيزة 122","جيزة 131","جيزة 168","جيزة 178","هاي تك 2030","بايونير 30ك8"],yield:"حسب الهجين والخدمة",priority:true,
+ fert:"نشرة الإرشاد: أراضٍ قديمة: آزوت 260 كجم يوريا أو 360 كجم نترات نشادر على دفعتين أو 3. أراضٍ جديدة: 360–450 كجم نترات نشادر حقنًا + جرعة تنشيطية سلفات نشادر. ممنوع الآزوت بعد التزهير. فوسفور/بوتاسيوم: مصادر متضاربة (200 كجم سوبر + 50 بوتاسيوم مقابل 50 سوبر فقط) — لم يُعتمد رقم موحد.",
+ steps:[{day:0,label:"جرعة تنشيطية: سلفات نشادر شيكارة/فدان عند الزراعة (أراضٍ جديدة)",perFeddan:50,unit:"كجم سلفات نشادر"},{day:20,label:"قبل رية المحاياة: الدفعة الأولى من الآزوت (~130 كجم يوريا/فدان في القديمة)",perFeddan:130,unit:"كجم يوريا"},{day:40,label:"قبل الرية الثانية: الدفعة الثانية من الآزوت (~130 كجم يوريا/فدان). لا آزوت بعد التزهير",perFeddan:130,unit:"كجم يوريا"}],
+ diseases:[{n:"دودة الحشد الخريفية (الأخطر)",s:"يرقات تأكل الأوراق (شبابيك/نوافذ)، ثم ثقوب وتلف القلوب والكيزان وبراز كثير",t:"فحص مبكر + جمع يدوي + مبيدات اللجنة (بروتكتو/فانتي) — تُطابَق مع اللجنة."},{n:"الذبول المتأخر",s:"ذبول مفاجئ وموت النبات",t:"زراعة مبكرة + هجن مقاومة فقط."}]},
+{id:"sunflower",name:"عباد الشمس",season:"صيفي (3 عروات)",planting:"مارس – يوليو؛ الوادي الجديد نيلي 15 أغسطس – أول سبتمبر",soil:"كل الأراضي عدا عالية الملوحة ورديئة الصرف",irrigation:"غمر / رش",gov:"المنوفية، الشرقية، الدقهلية، الوادي الجديد",varieties:["سخا 53","جيزة 102","سخا 52"],yield:"1200–1500 كجم/فدان (تقدير إرشادي)",priority:true,
+ fert:"الإرشاد: أراضٍ قديمة: فوسفور 100 كجم سوبر فوسفات + آزوت 30 كجم N (100 كجم نترات نشادر) على دفعتين بعد الخف وبعد أسبوعين + بوتاسيوم 50 كجم سلفات بوتاسيوم. أراضٍ جديدة: آزوت 45 كجم N على 5 دفعات، ولا يوريا.",
+ steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 100 كجم/فدان",perFeddan:100,unit:"كجم سوبر فوسفات"},{day:16,label:"بعد الخف: الدفعة الأولى آزوت (50 كجم نترات نشادر/فدان) + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:50,unit:"كجم نترات نشادر"},{day:30,label:"بعد أسبوعين: الدفعة الثانية آزوت (50 كجم نترات نشادر/فدان)",perFeddan:50,unit:"كجم نترات نشادر"}],
+ diseases:[{n:"عفن الساق الفحمي",s:"تعفن الساق والقرص",t:"حسب لجنة المبيدات."},{n:"الحفار والدودة القارضة",s:"قرض البادرات في الأطوار الأولى",t:"حسب لجنة المبيدات."}]},
+{id:"peanut",name:"الفول السوداني",season:"صيفي (نحو 4 أشهر)",planting:"منتصف أبريل – آخر مايو",soil:"صفراء وطميية ورملية؛ ⚠️ لا يصلح إطلاقًا في الطينية الثقيلة — في المنوفية ينجح فقط في الأراضي الخفيفة/الرملية",irrigation:"ري معتدل منتظم؛ التعطيش يزيد العفن الفحمي",gov:"الشرقية، البحيرة، الإسماعيلية، المنوفية (أراضيها الخفيفة)، الوادي الجديد",varieties:["جيزة 6","إسماعيلية 2"],yield:"20 أردب/فدان، قد تزيد عن 25 أردبًا",priority:true,
+ fert:"مرجع إرشادي ثانوي (يُراجَع مع نشرة 2023): فوسفور 200 كجم سوبر فوسفات + بوتاسيوم 50 كجم سلفات بوتاسيوم + آزوت 30 وحدة N على دفعتين (عند الزراعة وبعد 30 يومًا) + جبس زراعي 0.5 طن/فدان عند بداية التزهير (35–40 يومًا).",
+ steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 200 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان + الدفعة الأولى آزوت",perFeddan:200,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد 30 يومًا: الدفعة الثانية آزوت",perFeddan:15,unit:"وحدة آزوت"},{day:38,label:"بداية التزهير: جبس زراعي 0.5 طن/فدان أسفل النباتات",perFeddan:500,unit:"كجم جبس زراعي"}],
+ diseases:[{n:"أعفان الجذور وموت البادرات",s:"تقرحات بنية على الجذور وذبول واصفرار",t:"تطهير التقاوي + أصناف مقاومة + دورة زراعية."},{n:"العفن الأبيض (اللفحة الجنوبية)",s:"نمو أبيض قطني قرب سطح التربة وذبول",t:"صرف جيد + دورة زراعية + حسب اللجنة."},{n:"العفن الفحمي",s:"تلون أسود سخامي على الساق",t:"انتظام الري (لا تعطيش)."}]},
+/* --- باقي المحاصيل: بيانات أساسية من الجدول الشامل + برامج مختصرة من البحث --- */
+{id:"rice",name:"الأرز",season:"صيفي",planting:"مايو – يونيو؛ نيلي يوليو – أوائل أغسطس",soil:"طينية ثقيلة",irrigation:"غمر دائم 5–7 سم",gov:"كفر الشيخ، الدقهلية، الشرقية، البحيرة",varieties:["جيزة 177","جيزة 178","جيزة 179","سخا 101"],yield:"4–5 طن/فدان حسب الصنف",fert:"⚠️ تعارض موثق: نشرة مايو 2025: 3 شكاير يوريا/فدان + شيكارة بوتاسيوم 48%؛ ودليل قديم: آزوت 40–50 كجم/فدان على دفعتين. يُعتمد رقم 2025 الأحدث ويُحسم مع الإرشاد.",steps:[{day:14,label:"بعد أسبوعين من الشتل: الدفعة الأولى يوريا (حسب نشرة 2025)",perFeddan:75,unit:"كجم يوريا"},{day:45,label:"بعد 45 يومًا من الشتل: نصف شيكارة بوتاسيوم + باقي اليوريا",perFeddan:75,unit:"كجم يوريا"}],diseases:[{n:"لفحة الأرز (الأخطر)",s:"بقع مغزلية رمادية الوسط بنية الحواف + خناق رقبة السنبلة",t:"أصناف مقاومة + مبيد (ترايسيكلوزول/بيم) حسب اللجنة."},{n:"التبقع البني",s:"بقع بنية مستديرة مركزها فاتح على الأوراق السفلى",t:"تحسين التغذية (بوتاسيوم) + مبيد حسب اللجنة."}]},
+{id:"cotton",name:"القطن",season:"صيفي",planting:"مارس (حرارة تربة 15°م 10 أيام متتالية)",soil:"خصبة عميقة جيدة الصرف",irrigation:"غمر / تنقيط ورش (جديدة)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["سوبر جيزة 94","سوبر جيزة 97","جيزة 95","جيزة 98"],yield:"حسب الصنف والخدمة",fert:"نشرة القطن: آزوت 62 كجم N على دفعتين أو 3 + فوسفور 150 كجم سوبر فوسفات + بوتاسيوم 50 كجم سلفات بوتاسيوم. الرملية: كميات أكبر ولا يوريا — لم يُوجد رقم موثوق محدد.",steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:25,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:100,unit:"كجم سلفات نشادر"},{day:50,label:"قبل الرية التالية: الدفعة الثانية آزوت (تنتهي قبل التزهير)",perFeddan:100,unit:"كجم سلفات نشادر"}],diseases:[{n:"ديدان اللوز",s:"ثقوب في اللوز وتعفنه",t:"مصائد فرمونية + ترايكوجراما + مبيدات اللجنة."},{n:"دودة ورق القطن",s:"يرقات تأكل الأوراق",t:"مكافحة متكاملة + مبيدات اللجنة."}]},
+{id:"sugarbeet",name:"بنجر السكر",season:"شتوي",planting:"3 عروات: منتصف أغسطس – نهاية نوفمبر",soil:"طميية أفضل؛ طينية بإحكام ري؛ رملية بتوافر الماء",irrigation:"غمر على الحامي (7–8 ريات) / رش وتنقيط (15–20 رية)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["جلوريا","تورو","توب"],yield:"حسب الصنف والخدمة",fert:"نشرة 897/2004: آزوت 60–80 كجم N على دفعتين + فوسفور 100–200 كجم سوبر فوسفات + بوتاسيوم 50 كجم. ⚠️ تعارض: ملخصات أخرى تذكر 80–120 كجم N — اعتماد أرقام النشرة 897.",steps:[{day:0,label:"أثناء التجهيز: سوبر فوسفات 100–200 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:40,unit:"كجم N"},{day:55,label:"في الرية التالية: الدفعة الثانية آزوت. لا آزوت بعد عمر 90 يومًا",perFeddan:40,unit:"كجم N"}],diseases:[{n:"التبقع السركسبوري",s:"بقع مستديرة حافة بنية محمرة ومركز رمادي",t:"حسب لجنة المبيدات."},{n:"البياض الدقيقي",s:"طبقة بيضاء كالدقيق على الورقة",t:"حسب لجنة المبيدات."}]},
+{id:"faba",name:"الفول البلدي",season:"شتوي",planting:"قبلي أول أكتوبر؛ بحري أول نوفمبر",soil:"معظم الأراضي عدا الملحية والقلوية وسيئة الصرف",irrigation:"غمر معتدل",gov:"كل الجمهورية؛ النوبارية، الشرقية، المنوفية",varieties:["سخا 1","جيزة 716","نوبارية 1"],yield:"حسب الصنف والخدمة",fert:"آزوت جرعة منشطة فقط حتى 15 كجم N في الطينية و20 في الرملية + فوسفور 100–150 كجم سوبر فوسفات + بوتاسيوم 50 كجم للأراضي الفقيرة بعد 35 يومًا.",steps:[{day:0,label:"عند الزراعة: جرعة آزوت منشطة + سوبر فوسفات 100–150 كجم/فدان",perFeddan:125,unit:"كجم سوبر فوسفات"},{day:35,label:"بعد 35 يومًا: سلفات بوتاسيوم 50 كجم/فدان (للأراضي الفقيرة فيه)",perFeddan:50,unit:"كجم سلفات بوتاسيوم"}],diseases:[{n:"الهالوك (طفيل — الأخطر)",s:"شماريخ فوق التربة واصفرار وتساقط أزهار، فقد قد يصل 90–100%",t:"تأخير الزراعة 7–10 أيام في الموبوءة + حسب اللجنة."},{n:"التبقع البني",s:"بقع حمراء بنية ذات مركز رمادي على الأوراق السفلى",t:"حسب لجنة المبيدات."}]},
+{id:"clover",name:"البرسيم المصري",season:"شتوي",planting:"منتصف سبتمبر – آخر نوفمبر (الأنسب أول أكتوبر)",soil:"كل الأراضي المحتفظة بالرطوبة عدا الغدقة وعالية الملوحة",irrigation:"غمر في أحواض",gov:"كل الجمهورية",varieties:["هلالي","جميزة 1","سرو 1","جيزة 6"],yield:"علف — حسب عدد الحشات",fert:"نشرة 904/2004: فوسفور 150–200 كجم سوبر فوسفات + بوتاسيوم 50–75 كجم + آزوت تنشيطي 10–15 وحدة فقط. ⚠️ تعارض: معمل طنطا يذكر فوسفور 300–400 كجم — لم يُرجَّح رقم.",steps:[{day:0,label:"قبل الحرث: سوبر فوسفات 150–200 كجم/فدان + سلفات بوتاسيوم 50–75 كجم/فدان",perFeddan:175,unit:"كجم سوبر فوسفات"},{day:20,label:"قبل رية المحاياة: آزوت تنشيطي 10–15 وحدة فقط",perFeddan:12,unit:"وحدة آزوت"}],diseases:[{n:"أمراض البرسيم المصري",s:"لا يوجد قسم أمراض موثق في المصادر المفتوحة — يحتاج نشرة 904 الكاملة",t:"راجع معهد بحوث أمراض النباتات."}]},
+{id:"barley",name:"الشعير",season:"شتوي",planting:"بحري 20 نوفمبر – 15 ديسمبر؛ قبلي 10 نوفمبر – أول ديسمبر",soil:"كل الأراضي حتى الملحية (حتى 6000 جزء/مليون)",irrigation:"2–3 ريات / رش / مطري",gov:"مطروح، الساحل الشمالي، سيناء، شرق العوينات",varieties:["جيزة 123","جيزة 124","جيزة 125","جيزة 133"],yield:"حسب الصنف والري",fert:"نشرة 921/2004: فوسفور 100 كجم سوبر فوسفات + آزوت 45 كجم N على 3 دفعات (20/40/باقي) + بوتاسيوم 24 كجم. الرملية: آزوت 65 وحدة ولا يوريا.",steps:[{day:0,label:"قبل الزراعة: سوبر فوسفات 100 كجم/فدان + 20% آزوت",perFeddan:20,unit:"كجم يوريا"},{day:22,label:"مع رية المحاياة: 40% آزوت",perFeddan:40,unit:"كجم يوريا"},{day:47,label:"مع الرية الثانية: باقي الآزوت. لا آزوت بعد طرد السنابل",perFeddan:40,unit:"كجم يوريا"}],diseases:[{n:"صدأ الأوراق",s:"بثرات بنية فاتحة مستديرة تتحول للأسود",t:"أصناف مقاومة."},{n:"التبقع الشبكي",s:"بقع مغزلية حولها هالة صفراء وبتقسيم شبكي",t:"أصناف مقاومة."}]},
+{id:"potato",name:"البطاطس",season:"شتوي/صيفي/نيلي",planting:"سبتمبر – فبراير (3 عروات)",soil:"رملية وصفراء جيدة الصرف (لا تغريق)",irrigation:"تنقيط ومحوري (جديدة) / غمر (قديمة)",gov:"البحيرة، المنوفية، الدقهلية، الجيزة، المنيا",varieties:["سبونتا","ديزيريه","نيكولا","دايمونت","موناليزا"],yield:"حسب العروة والصنف",fert:"⚠️ تعارض كبير موثق: برنامج كلاسيكي 60–80 كجم N، وبرنامج حديث 180–200 وحدة آزوت، وFAO نحو 126 كجم N/فدان. لا تُدمج — يُعتمد برنامج واحد بعد تحليل التربة ومراجعة نشرة البطاطس الرسمية.",steps:[{day:0,label:"قبل الزراعة: سماد بلدي + سوبر فوسفات (حسب البرنامج المعتمد بعد تحليل التربة)",perFeddan:0,unit:"—"},{day:35,label:"بعد 30–40 يومًا: دفعة آزوت حسب البرنامج المعتمد",perFeddan:0,unit:"—"}],diseases:[{n:"الندوة المتأخرة",s:"بقع مائية على قمم وحواف الأوراق تتحول لبني/أسود مع زغب رمادي",t:"حسب لجنة المبيدات."},{n:"الندوة المبكرة",s:"بقع بنية دائرية بحلقات متداخلة تشبه الهدف",t:"حسب لجنة المبيدات."},{n:"دودة درنات البطاطس",s:"أنفاق داخل الدرنات",t:"الترديم الجيد."}]},
+{id:"tomato",name:"الطماطم",season:"شتوي وصيفي (عروات)",planting:"فبراير – مايو (صيفي) وعروات أخرى",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط",gov:"كل الجمهورية؛ المنوفية، القليوبية، الجيزة",varieties:["بيتو 86","كاسل روك","سوبر استرين بي","فلوراديد"],yield:"حسب العروة والهجين",fert:"دليل المنوفية (غمر): عند المحاياة 150 كجم سلفات نشادر + 50 بوتاسيوم؛ بعد شهر 200 نشادر + 100 بوتاسيوم؛ بعد 80–90 يومًا 150 نترات نشادر + 100 بوتاسيوم. تُزاد الكميات 50% في الرملية.",steps:[{day:25,label:"رية المحاياة: سلفات نشادر 150 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:150,unit:"كجم سلفات نشادر"},{day:55,label:"بعد شهر: سلفات نشادر 200 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:200,unit:"كجم سلفات نشادر"},{day:85,label:"بعد 80–90 يومًا: نترات نشادر 150 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:150,unit:"كجم نترات نشادر"}],diseases:[{n:"الندوة المبكرة",s:"بقع على الأوراق السفلى بحلقات دائرية تمتد للأعلى",t:"حسب لجنة المبيدات."},{n:"الندوة المتأخرة",s:"بقع كبيرة مائية مخضرة داكنة على الأوراق والثمار",t:"حسب لجنة المبيدات."},{n:"تجعد واصفرار الأوراق الفيروسي",s:"تجعد واصفرار وتقزم",t:"لا علاج للفيروس؛ مكافحة الذباب الأبيض وأصناف مقاومة."}]},
+{id:"onion",name:"البصل",season:"شتوي (وصيفي)",planting:"مشتل أول أكتوبر – نهاية نوفمبر (بحري)؛ شتلات أواخر نوفمبر",soil:"طميية وصفراء جيدة الصرف",irrigation:"غمر معتدل",gov:"سوهاج، الدقهلية، الغربية، المنوفية",varieties:["جيزة 6 محسن","جيزة 20","جيزة أحمر","جيزة أبيض"],yield:"حسب الصنف والخدمة",fert:"⚠️ لا يوجد برنامج NPK رسمي موحد موثوق في المصادر المفتوحة. برنامجان منقولان مختلفان (60–90 وحدة آزوت مقابل 120 وحدة في الجديدة) — لا يُعتمد رقم قبل نشرة رسمية حديثة.",steps:[{day:0,label:"عند التجهيز: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:21,label:"بعد 21 يومًا من الزراعة: الدفعة الأولى آزوت (راجع النشرة الرسمية)",perFeddan:0,unit:"—"}],diseases:[{n:"العفن الأبيض (الأخطر)",s:"اصفرار ثم ذبول ثم موت الأوراق من القمة للأسفل وعفن جذور",t:"دورة زراعية + عدم زراعة شتلات مصابة. حسب اللجنة."},{n:"البياض الزغبي",s:"بقع صفراء باهتة بنمو زغبي رمادي مشوب ببنفسجي",t:"حسب لجنة المبيدات."},{n:"اللفحة الأرجوانية",s:"بقع بيضاوية غائرة وسط أرجواني وحافة صفراء",t:"حسب لجنة المبيدات."}]},
+{id:"garlic",name:"الثوم",season:"شتوي",planting:"سبتمبر – أكتوبر",soil:"طميية وصفراء جيدة الصرف",irrigation:"غمر معتدل؛ تنقيط في الجديدة",gov:"المنيا، بني سويف، الشرقية، الدقهلية",varieties:["البلدي المصري","سدس 40","إيجاسيد 1"],yield:"حسب الصنف والخدمة",fert:"نشرة إرشادية منقولة: إجمالي 120 وحدة آزوت + 75 فوسفور + 72 بوتاسيوم على 3 دفعات بعد الإنبات وبعد شهر وبعد شهرين + سماد بلدي 20 م³ + كبريت زراعي 300 كجم.",steps:[{day:10,label:"بعد تمام الإنبات: 50 آزوت + 20 فوسفور + 12 بوتاسيوم",perFeddan:50,unit:"وحدة آزوت"},{day:40,label:"بعد شهر: 30 آزوت + 20 فوسفور + 24 بوتاسيوم",perFeddan:30,unit:"وحدة آزوت"},{day:70,label:"بعد شهرين من الثانية: 25 آزوت + 10 فوسفور + 36 بوتاسيوم",perFeddan:25,unit:"وحدة آزوت"}],diseases:[{n:"العفن الأبيض",s:"اصفرار وذبول وعفن جذور",t:"حسب لجنة المبيدات."},{n:"البياض الزغبي",s:"بقع صفراء بنمو زغبي",t:"حسب لجنة المبيدات."}]},
+{id:"soybean",name:"فول الصويا",season:"صيفي",planting:"مايو (النصف الثاني للتقاوي)",soil:"خصبة جيدة الصرف؛ يجود في الجيرية والرملية",irrigation:"غمر / رش",gov:"الشرقية، الدقهلية، المنوفية، المنيا",varieties:["جيزة 35","جيزة 82","جيزة 83","جيزة 111"],yield:"1.2–1.7 طن/فدان حسب الصنف",fert:"نشرة الإرشاد: فوسفور 150 كجم سوبر فوسفات + آزوت تنشيطي 15 وحدة (20 في الجديدة)؛ إن وُجد 8 عقد بكتيرية حمراء أو أكثر في عمر 25–30 يومًا فلا آزوت بعدها. بوتاسيوم 50 كجم.",steps:[{day:0,label:"عند الزراعة: سوبر فوسفات 150 كجم/فدان + آزوت تنشيطي 15 وحدة",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:28,label:"عمر 25–30 يومًا: افحص العقد البكتيرية؛ إن قلّت عن 8 عقد حمراء أضف 40 وحدة آزوت (قديمة)",perFeddan:40,unit:"وحدة آزوت"}],diseases:[{n:"دودة ورق القطن",s:"يرقات تأكل الأوراق",t:"حسب لجنة المبيدات."},{n:"تبقع سركسبوري",s:"تبقعات على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"sesame",name:"السمسم",season:"صيفي",planting:"منتصف أبريل – نهاية مايو",soil:"خفيفة جيدة الصرف",irrigation:"غمر معتدل على الحامي (لا ري ظهيرة ولا مياه راكدة)",gov:"قنا، سوهاج، أسيوط، الشرقية",varieties:["جيزة 32","شندويل 3","توشكي 1","سوهاج 1"],yield:"4.5–5 أردب/فدان في المتوسط",fert:"نشرة 2023: فوسفور 200 كجم سوبر فوسفات (فقيرة) / 150 (بعد نجيليات) / 100 (بعد بقوليات) + بوتاسيوم 50 كجم + آزوت 30 وحدة على 3 دفعات في الخصبة.",steps:[{day:0,label:"قبل التخطيط: سوبر فوسفات 100–200 كجم/فدان حسب المحصول السابق",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:20,label:"عقب الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:10,unit:"وحدة آزوت"},{day:35,label:"بعد أسبوعين: الدفعة الثانية آزوت",perFeddan:10,unit:"وحدة آزوت"}],diseases:[{n:"الذبول الفيوزاريومي",s:"اصفرار يتقدم لأسفل وتدلٍّ وجفاف وخطوط سوداء على الساق",t:"أصناف مقاومة (شندويل 3) + دورة ثلاثية."},{n:"موت البادرات",s:"موت البادرات وأعفان الجذور",t:"تقاوي معاملة بمطهر فطري."}]},
+{id:"sorghum",name:"الذرة الرفيعة",season:"صيفي",planting:"مايو – يونيو",soil:"تتحمل الجفاف والملوحة نسبيًا",irrigation:"غمر / رش (6–7 ريات)",gov:"الصعيد، الوادي الجديد، شرق العوينات",varieties:["دورادو","شندويل 1","شندويل 2","جيزة 15"],yield:"حسب الصنف والخدمة",fert:"نشرة مركز البحوث: فوسفور 100–150 كجم سوبر فوسفات (200 في الرملية) + آزوت 80 كجم للطويلة و100 كجم للقصيرة على دفعتين + بوتاسيوم 50 كجم في الجديدة.",steps:[{day:0,label:"عند الزراعة: سوبر فوسفات 100–150 كجم/فدان",perFeddan:125,unit:"كجم سوبر فوسفات"},{day:21,label:"بعد 3 أسابيع (المحاياة): الدفعة الأولى آزوت",perFeddan:50,unit:"كجم آزوت"},{day:45,label:"الدفعة الثانية آزوت + سلفات بوتاسيوم 50 كجم/فدان (جديدة)",perFeddan:50,unit:"كجم آزوت"}],diseases:[{n:"البياض الزغبي",s:"أعراض زغبية على الأوراق",t:"أصناف مقاومة."},{n:"التفحم",s:"تفحم الحبوب والرؤوس",t:"أصناف مقاومة + معاملة التقاوي."}]},
+{id:"sugarcane",name:"قصب السكر",season:"معمر",planting:"غرس خريفي سبتمبر–أكتوبر؛ ربيعي فبراير–مارس",soil:"طينية خصبة",irrigation:"غمر",gov:"قنا، الأقصر، أسوان، المنيا",varieties:["جيزة–تايوان 54/9 (السائد)","جيزة 3"],yield:"حسب الغرس والخلف",fert:"نشرة 2023: آزوت 180–210 كجم (ربيعي) و200–230 كجم (خريفي/خلف) على 3 دفعات + بوتاسيوم 24–48 كجم + فوسفور 30 كجم + جبس 3–4 طن/فدان. لا آزوت بعد النصف الثاني من أغسطس.",steps:[{day:0,label:"عند التجهيز: سوبر فوسفات + جبس 3–4 طن/فدان",perFeddan:3500,unit:"كجم جبس"},{day:30,label:"بعد العزقة الأولى: الربع الأول من الآزوت",perFeddan:50,unit:"كجم N"},{day:60,label:"الدفعة الثانية آزوت + سلفات بوتاسيوم",perFeddan:50,unit:"كجم N"}],diseases:[{n:"التفحم السوطي (الأخطر)",s:"سوط نحو 1 م يتحول للأسود وينفجر",t:"أصناف مقاومة + عقل سليمة + حرق المخلفات."},{n:"الموزاييك",s:"برقشة على الأوراق، فقد 3–50%",t:"مكافحة المن + أصناف مقاومة."}]},
+{id:"cucumber",name:"الخيار",season:"صيفي",planting:"فبراير – أبريل (صيفي رئيسي)؛ خريفي يونيو – أغسطس",soil:"طميية وصفراء؛ التنقيط هو المناسب",irrigation:"تنقيط (الأفضل)",gov:"كل الجمهورية",varieties:["الزعيم","النمس","سويت كرانشي"],yield:"حسب العروة والهجين",fert:"مرجع ثانوي: 20 م³ سماد بلدي + 300 كجم سلفات نشادر + 100 سوبر فوسفات + 100 سلفات بوتاسيوم/فدان على 3 دفعات — تقسيم الدفعات غير موثق.",steps:[{day:0,label:"عند التجهيز: سماد بلدي 20 م³/فدان",perFeddan:20,unit:"م³ سماد بلدي"},{day:20,label:"الدفعة الأولى من برنامج التسميد (راجع المرجع الزراعي)",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الزغبي",s:"بقع زغبية على الأوراق",t:"حسب لجنة المبيدات."},{n:"الذبابة البيضاء",s:"ذباب أبيض صغير على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"squash",name:"الكوسة",season:"صيفي وشتوي",planting:"صيفية فبراير – منتصف مارس؛ نيلية يوليو – أغسطس",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط",gov:"كل الجمهورية",varieties:["إسكندراني","توب كابي","مبروكة"],yield:"حسب العروة والصنف",fert:"الإرشاد (kenanaonline): تجهيز 10–20 م³ سماد بلدي + 150 كجم سوبر فوسفات، ثم في الغمر على 4 دفعات: عند المحاياة 50 نشادر + 25 نترات + 50 بوتاسيوم، ثم دفعات كل 15 يومًا.",steps:[{day:0,label:"عند التجهيز: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:21,label:"عند المحاياة: 50 كجم سلفات نشادر + 25 نترات نشادر + 50 سلفات بوتاسيوم/فدان",perFeddan:50,unit:"كجم سلفات نشادر"},{day:36,label:"بعد 15 يومًا: 50 كجم نترات نشادر + 100 سلفات بوتاسيوم/فدان",perFeddan:50,unit:"كجم نترات نشادر"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء دقيقية على الأوراق",t:"حسب لجنة المبيدات."},{n:"الذبابة البيضاء",s:"تشتد يوليو–أغسطس",t:"حسب لجنة المبيدات."}]},
+{id:"bean",name:"الفاصوليا الخضراء",season:"صيفي/نيلي",planting:"الأنسب 15–20 سبتمبر؛ صيفية فبراير–مارس",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط (حساس جدًا لزيادة الري)",gov:"المنوفية، الشرقية، البحيرة، الجيزة",varieties:["برونكو","بوليستا","فالنتينا"],yield:"حسب العروة والصنف",fert:"مرجع ثانوي: أراضٍ خصبة: 200 كجم سلفات نشادر + 200 سوبر فوسفات + 100 سلفات بوتاسيوم/فدان على دفعتين (بعد الإنبات وعند الإزهار). نشرة التصدير (تنقيط): نحو 55 وحدة آزوت + 55 فوسفور + 25–30 بوتاسيوم — برنامجان مختلفان فلا يُدمجا.",steps:[{day:10,label:"بعد تمام الإنبات وقبل الري: الدفعة الأولى",perFeddan:100,unit:"كجم سلفات نشادر"},{day:35,label:"عند بداية الإزهار وقبل الري: الدفعة الثانية",perFeddan:100,unit:"كجم سلفات نشادر"}],diseases:[{n:"صدأ الفاصوليا",s:"بثرات صدأ على الأوراق",t:"حسب لجنة المبيدات."},{n:"العفن الأبيض",s:"عفن أبيض على السيقان والقرون",t:"حسب لجنة المبيدات."},{n:"ذبابة الفاصوليا",s:"إصابة البادرات",t:"الزراعة في الميعاد المناسب."}]},
+{id:"eggplant",name:"الباذنجان",season:"صيفي وشتوي",planting:"شتلات أبريل – مايو (صيفي)",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط",gov:"كل الجمهورية",varieties:["أصناف وهجن محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد بحوث البساتين — لم يُغطَّ في هذا البحث.",steps:[{day:0,label:"راجع نشرة البساتين قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"cabbage",name:"الكرنب والقرنبيط",season:"شتوي",planting:"سبتمبر – نوفمبر",soil:"خصبة جيدة الصرف",irrigation:"غمر",gov:"كل الجمهورية",varieties:["أصناف محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد بحوث البساتين.",steps:[{day:0,label:"راجع نشرة البساتين قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الزغبي",s:"بقع زغبية على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"pepper",name:"الفلفل",season:"صيفي",planting:"مارس – مايو",soil:"خصبة جيدة الصرف",irrigation:"تنقيط",gov:"كل الجمهورية",varieties:["أصناف وهجن محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد بحوث البساتين.",steps:[{day:0,label:"راجع نشرة البساتين قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"okra",name:"البامية",season:"صيفي",planting:"مارس – مايو",soil:"خصبة جيدة الصرف",irrigation:"غمر",gov:"كل الجمهورية",varieties:["أصناف محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد بحوث البساتين.",steps:[{day:0,label:"راجع نشرة البساتين قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"watermelon",name:"البطيخ",season:"صيفي",planting:"مارس – مايو",soil:"رملية خفيفة",irrigation:"تنقيط",gov:"الإسماعيلية، البحيرة، المنوفية",varieties:["أصناف وهجن محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد بحوث البساتين.",steps:[{day:0,label:"راجع نشرة البساتين قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الزغبي",s:"بقع زغبية على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"lentil",name:"العدس والحمص والحلبة",season:"شتوي",planting:"أكتوبر – نوفمبر",soil:"خفيفة جيدة الصرف",irrigation:"غمر معتدل / مطري",gov:"مطروح، سيناء، الصعيد",varieties:["أصناف محلية معتمدة"],yield:"حسب المحصول والصنف",fert:"برامج التسميد تُستكمل من نشرات معهد المحاصيل الحقلية.",steps:[{day:0,label:"راجع نشرة المحاصيل الحقلية قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"flax",name:"الكتان",season:"شتوي",planting:"أكتوبر – نوفمبر",soil:"طينية خصبة",irrigation:"غمر",gov:"الدقهلية، الشرقية، الغربية",varieties:["أصناف محلية معتمدة"],yield:"حسب الصنف والخدمة",fert:"برنامج التسميد يُستكمل من نشرات معهد المحاصيل الحقلية.",steps:[{day:0,label:"راجع نشرة المحاصيل الحقلية قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"البياض الدقيقي",s:"طبقة بيضاء على الأوراق",t:"حسب لجنة المبيدات."}]},
+{id:"alfalfa",name:"البرسيم الحجازي",season:"معمر",planting:"مارس – أبريل (وشتلات)",soil:"رملية وطميية جيدة الصرف",irrigation:"رش محوري / تنقيط",gov:"الوادي الجديد، شرق العوينات، النوبارية",varieties:["أصناف محلية معتمدة"],yield:"علف — حسب عدد الحشات",fert:"برنامج التسميد يُستكمل من نشرات معهد المحاصيل الحقلية.",steps:[{day:0,label:"راجع نشرة المحاصيل الحقلية قبل الاعتماد",perFeddan:0,unit:"—"}],diseases:[{n:"أمراض البرسيم الحجازي",s:"لا تُنقل علاجات البرسيم الحجازي إلى البرسيم المصري",t:"راجع معهد بحوث أمراض النباتات."}]}
+];
+const SYMPTOMS = ["اصفرار الأوراق","بقع على الورقة","بثرات صفراء بودرة","ذبول النبات","ثقوب في الورقة","تعفن","تجعد الأوراق","بقع بنية","نمو أبيض قطني","يرقات تأكل الورق"];
+
+/* ===== التخزين والحسابات ===== */
+function emptyDB(){return {users:[],plantings:[],logs:[],sales:[],diagnoses:[],questions:[],supervision:{open:false},cropEdits:{},labels:{},created:new Date().toISOString()};}
+function loadDB(){try{const d=JSON.parse(localStorage.getItem(DB_KEY));if(!d||!d.users)return emptyDB();if(!d.labels)d.labels={};if(!d.cropEdits)d.cropEdits={};if(!d.sales)d.sales=[];if(!d.questions)d.questions=[];if(!d.supervision||typeof d.supervision.open!=="boolean")d.supervision={open:false};d.users.forEach(normUser);return d;}catch(e){return emptyDB();}}
+function saveDB(db){localStorage.setItem(DB_KEY,JSON.stringify(db));}
+/* ===== الاشتراكات: مجاني أو مدفوع شهريًا =====
+   كل مستخدم له: plan ("free" أو "paid")، monthlyFee (جنيه/شهر يحدده الأدمن)،
+   paidUntil (تاريخ "مدفوع حتى" YYYY-MM-DD يُسجَّل عند الدفع).
+   الافتراضي لأي مستخدم جديد أو قديم بلا بيانات اشتراك: مجاني.
+   الأدمن لا يُقفل اشتراكه أبدًا. المزارع المدفوع المنتهي يُقفل دخوله للزراعات
+   حتى يجدد، وبياناته تفضل محفوظة. */
+const MAX_USERS=1000; // الحد الأقصى لعدد المستخدمين
+/* ===== التسجيل الذاتي بموافقة الأدمن =====
+   كل مستخدم له status: "approved" (مقبول — يقدر يدخل) أو "pending"
+   (في انتظار موافقة الأدمن — لا يدخل) أو "rejected" (مرفوض — لا يدخل).
+   المستخدمون القدامى والمستخدمون الذين يضيفهم الأدمن بنفسه يبقوا
+   "approved" تلقائيًا. الحساب الجديد من زر «إنشاء حساب جديد» يبقى
+   "pending" لحد ما الأدمن يقبل أو يرفض من قائمة «طلبات معلقة». */
+function normUser(u){if(!u)return u;if(u.status!=="pending"&&u.status!=="rejected")u.status="approved";if(u.plan!=="paid")u.plan="free";if(u.plan==="paid"){u.monthlyFee=(u.monthlyFee==null||isNaN(Number(u.monthlyFee)))?null:Number(u.monthlyFee);u.paidUntil=u.paidUntil||null;}else{u.monthlyFee=null;u.paidUntil=null;}return u;}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function subStatus(u){
+  if(!u||u.plan!=="paid")return {key:"free",label:"مجاني",active:true};
+  if(!u.paidUntil)return {key:"expired",label:"مدفوع — لم يُسجَّل دفع بعد (منتهي)",active:false};
+  if(u.paidUntil>=todayStr())return {key:"paid",label:"مدفوع حتى "+fmtDate(u.paidUntil),active:true};
+  return {key:"expired",label:"منتهي — كان مدفوعًا حتى "+fmtDate(u.paidUntil),active:false};
+}
+function subActive(u){return subStatus(u).active;}
+function subBadge(u){const s=subStatus(u);return "<span class='badge"+(s.active?"":" red")+"'>"+esc(s.label)+"</span>";}
+function updateSubBanner(){
+  const b=document.getElementById("subBanner");if(!b)return;
+  const u=currentUser();
+  if(u&&u.role!=="admin"&&!subActive(u)){b.classList.remove("hidden");b.innerHTML="⚠️ <b>اشتراكك انتهى</b> — "+esc(subStatus(u).label)+". لن تستطيع فتح الزراعات حتى تجدد اشتراكك عند الأدمن. بياناتك محفوظة ولن تُحذف.";}
+  else b.classList.add("hidden");
+}
+let DB=loadDB();
+function currentUser(){try{const s=JSON.parse(sessionStorage.getItem(SESSION_KEY));if(!s)return null;return DB.users.find(u=>u.username===s.username)||null;}catch(e){return null;}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+async function sha256(t){try{if(crypto.subtle){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");}}catch(e){}let h=0;for(let i=0;i<t.length;i++){h=((h<<5)-h+t.charCodeAt(i))|0;}return "simple"+h;}
+function fmt(n){return Number(n||0).toLocaleString("ar-EG",{maximumFractionDigits:2});}
+function areaFeddan(p){if(!p.areaValue||p.areaUnit==="لا أعلم")return null;return p.areaUnit==="قيراط"?p.areaValue/QIRAT_PER_FEDDAN:p.areaValue;}
+function areaLabel(p){if(!p.areaValue||p.areaUnit==="لا أعلم")return "لا أعلم";if(p.areaUnit==="قيراط")return p.areaValue+" قيراط (= "+(p.areaValue/QIRAT_PER_FEDDAN)+" فدان)";return p.areaValue+" فدان";}
+function cropById(id){return CROPS.find(c=>c.id===id)||CROPS[0];}
+/* محصول "غير ذلك": ليس في قاعدة البيانات — خطة عامة + نتيجة بحث النت التي لصقها المزارع */
+function cropObjOf(p){
+  if(p.cropId!=="custom")return cropById(p.cropId);
+  return {id:"custom",name:p.customCropName||"محصول آخر (غير ذلك)",season:"—",planting:"—",soil:p.soil||"—",irrigation:p.irr||"—",gov:p.gov||"—",varieties:[],yield:"— (راجع نتيجة البحث على النت)",priority:false,
+    fert:(p.customCropPlan?p.customCropPlan+" ":"")+"هذا المحصول غير موجود في قاعدة بيانات التطبيق (30 محصولًا). ابحث عنه على النت بزر «ابحث على النت» والصق ملخص الخطة هنا، أو راجع الإرشاد الزراعي. الجرعات العامة وحدها لا تكفي.",
+    steps:[{day:0,label:"تجهيز الأرض حسب نتيجة البحث على النت",perFeddan:0,unit:"—"},{day:20,label:"دفعة تسميد أولى حسب الخطة التي وجدتها (الصقها في خانة الخطة)",perFeddan:0,unit:"—"},{day:45,label:"دفعة تسميد ثانية حسب الخطة التي وجدتها",perFeddan:0,unit:"—"}],
+    diseases:[]};
+}
+function toggleCustom(selectId,boxId){const el=document.getElementById(selectId);if(!el)return;document.getElementById(boxId).classList.toggle("hidden",el.value!=="غير ذلك");}
+function onCropChange(){fillVarieties();toggleCustom("npCrop","customCropBox");}
+function searchCustomCrop(){
+  const name=document.getElementById("customCropName").value.trim();
+  const desc=document.getElementById("customCropDesc").value.trim();
+  if(!name){alert("اكتب اسم المحصول أولًا.");return;}
+  const q="زراعة "+name+" برنامج التسميد وزارة الزراعة مصر "+desc;
+  const url="https://www.google.com/search?q="+encodeURIComponent(q);
+  const url2="https://www.bing.com/search?q="+encodeURIComponent(q);
+  window.open(url,"_blank");
+  document.getElementById("customCropSearchResult").innerHTML="تم فتح البحث على النت عن: <b>"+esc(name)+"</b><br>اقرأ النتيجة من مصدر رسمي (وزارة الزراعة / الإرشاد الزراعي) والصق ملخص خطة الزراعة والتسميد في الخانة بالأسفل.<br><a href='"+url+"' target='_blank'>فتح بحث جوجل</a> | <a href='"+url2+"' target='_blank'>فتح بحث بينج</a><br><span style='font-size:15px'>ملاحظة: التطبيق يفتح محرك البحث في تبويب جديد، لأنه لا يستطيع جلب نتائج جوجل داخل الصفحة مباشرة.</span>";
+  window.__customSearch={name:name,url:url};
+}
+/* ===== الأسماء الشائعة جنب الاسم العلمي =====
+   الفلاح يعرف "السوبر" و"النترات" و"الملح" و"الكيماوي الأبيض" أكثر من الأسماء العلمية،
+   فنكتب الاسم الشائع بين قوسين بعد أول ظهور للاسم العلمي في خطط التسميد والري والمبيدات. */
+const COMMON_NAMES=[["سلفات نشادر","الملح"],["نترات النشادر","النترات"],["نترات نشادر","النترات"],["نترات الأمونيوم","النترات"],["نترات أمونيوم","النترات"],["يوريا","الكيماوي الأبيض"],["سوبر فوسفات","السوبر"],["سلفات بوتاسيوم","البوتاسيوم"],["نترات الجير","نترات الكالسيوم (الجير النتراتي)"],["حمض الفوسفوريك","حمض الفوسفور السائل"],["كبريت زراعي","الكبريت"],["جبس زراعي","الجبس"],["سلفات مغنسيوم","المغنسيوم"]];
+const COMMON_GLOSSARY="الأسماء الشائعة عند الفلاحين: اليوريا = الكيماوي الأبيض (آزوت 46%)، نترات النشادر = النترات (آزوت 33.5%)، سلفات النشادر = الملح (آزوت 20.6%)، سوبر فوسفات = السوبر (فوسفور)، سلفات البوتاسيوم = البوتاسيوم (للتحجيم)، الجبس الزراعي = الجبس، الكبريت الزراعي = الكبريت. أسماء المبيدات: المادة الفعالة هي الاسم العلمي، واسأل عنها في محل المبيدات باسم المادة الفعالة وراجع لجنة المبيدات.";
+function withCommonNames(s){
+  if(!s)return s; let out=String(s);
+  COMMON_NAMES.forEach(([sci,com])=>{ const i=out.indexOf(sci); if(i>=0 && out.slice(i+sci.length,i+sci.length+1)!=="("){ out=out.slice(0,i+sci.length)+" ("+com+")"+out.slice(i+sci.length); } });
+  return out;
+}
+/* اقتراح التربة حسب المحافظة: الأكثر شيوعًا فيها، ويقدر المزارع يغيّرها */
+const GOV_SOIL={"المنوفية":"طينية","القليوبية":"طينية","الشرقية":"طينية","الدقهلية":"طينية","البحيرة":"طينية","الغربية":"طينية","كفر الشيخ":"طينية","دمياط":"طينية","القاهرة":"طينية","الجيزة":"طينية","الفيوم":"طينية","بني سويف":"طينية","المنيا":"طينية","أسيوط":"طينية","سوهاج":"طينية","قنا":"طينية","الأقصر":"طينية","أسوان":"طينية","الإسماعيلية":"طينية","السويس":"طينية","بورسعيد":"طينية","شرق العوينات":"رملية","الوادي الجديد":"رملية","مطروح":"رملية","سيناء":"رملية","البحر الأحمر":"رملية"};
+function suggestSoil(){
+  const gov=document.getElementById("npGov").value;
+  const sug=GOV_SOIL[gov];
+  const note=document.getElementById("soilSuggestNote");
+  if(!sug){ if(note)note.textContent=""; return; }
+  const soilEl=document.getElementById("npSoil");
+  soilEl.value=sug; toggleCustom("npSoil","customSoilBox");
+  if(note)note.textContent="اقترحنا التربة "+sug+" لأنها الأكثر شيوعًا في "+gov+" — تقدر تغيّرها أو تختار «لا أعلم» أو «غير ذلك».";
+}
+function visiblePlantings(){const u=currentUser();if(!u)return[];return u.role==="admin"?DB.plantings:DB.plantings.filter(p=>p.owner===u.username);}
+/* ===== التكاليف: تكلفة عملية + تكلفة عمالة منفصلتين =====
+   كل خطوة = تكلفة العملية (ري/سماد/رش/حصاد بالمعدة) + تكلفة العمالة.
+   لو الفلاح عملها بنفسه يحط العمالة 0. سجلات قديمة فيها تكلفة واحدة فقط
+   تُعامل كتكلفة عملية وتكلفة عمالة 0 (توافق رجعي). */
+function logOpCost(l){return Number(l.opCost!=null?l.opCost:(l.cost||0));}
+function logLaborCost(l){return Number(l.laborCost||0);}
+function logTotal(l){return logOpCost(l)+logLaborCost(l);}
+function plantingCost(pid){return DB.logs.filter(l=>l.plantingId===pid).reduce((s,l)=>s+logTotal(l),0);}
+function plantingCostSplit(pid){const ls=DB.logs.filter(l=>l.plantingId===pid);return {op:ls.reduce((s,l)=>s+logOpCost(l),0),labor:ls.reduce((s,l)=>s+logLaborCost(l),0),total:ls.reduce((s,l)=>s+logTotal(l),0)};}
+/* ===== المبيعات: بيع على أجزاء متعددة =====
+   المحصول ممكن ما يتباعش مرة واحدة — مثال البرسيم ممكن يتباع 20 مرة
+   جزء جزء. كل بيعة: كمية (اختيارية لو عارفها) + قيمة المبيعات (إجبارية *).
+   الربح في نهاية الموسم = إجمالي المبيعات المتراكمة − إجمالي التكاليف. */
+function plantingSales(pid){return (DB.sales||[]).filter(s=>s.plantingId===pid);}
+function plantingSalesTotal(pid){return plantingSales(pid).reduce((s,x)=>s+Number(x.value||0),0);}
+function fmtDate(d){if(!d)return "—";try{return new Date(d).toLocaleDateString("ar-EG");}catch(e){return d;}}
+function addDays(dateStr,days){const d=new Date(dateStr);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
+
+/* ===== الدخول ===== */
+function refreshAuth(){
+  const setupNeeded=DB.users.length===0;
+  document.getElementById("setupBox").classList.toggle("hidden",!setupNeeded);
+  document.getElementById("loginBox").classList.toggle("hidden",setupNeeded);
+  document.getElementById("authTitle").textContent=setupNeeded?"إنشاء حساب الأدمن (أول مرة)":"تسجيل الدخول";
+}
+async function setupAdmin(){
+  const u=document.getElementById("setupUser").value.trim(),p=document.getElementById("setupPass").value;
+  if(u.length<3||p.length<4){alert("اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.");return;}
+  DB.users.push({username:u,pass:await sha256(p),role:"admin",plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});
+  saveDB(DB);sessionStorage.setItem(SESSION_KEY,JSON.stringify({username:u}));enterApp();
+}
+async function login(){
+  const u=document.getElementById("loginUser").value.trim(),p=document.getElementById("loginPass").value;
+  const user=DB.users.find(x=>x.username===u);
+  if(!user||user.pass!==await sha256(p)){document.getElementById("loginErr").textContent="اسم المستخدم أو كلمة السر غير صحيحة.";return;}
+  if(user.status==="pending"){document.getElementById("loginErr").textContent="حسابك لسه في انتظار موافقة الأدمن — جرّب تاني بعد ما يوافق.";return;}
+  if(user.status==="rejected"){document.getElementById("loginErr").textContent="تم رفض طلب حسابك. تواصل مع الأدمن لو فيه خطأ.";return;}
+  sessionStorage.setItem(SESSION_KEY,JSON.stringify({username:u}));enterApp();
+}
+async function registerUser(){
+  const name=document.getElementById("regUser").value.trim(),pass=document.getElementById("regPass").value;
+  const msg=document.getElementById("regMsg");
+  if(name.length<3||pass.length<4){msg.style.color="#8a1f1f";msg.textContent="اكتب اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.";return;}
+  if(DB.users.some(x=>x.username===name)){msg.style.color="#8a1f1f";msg.textContent="اسم المستخدم ده موجود بالفعل — جرّب اسم تاني.";return;}
+  if(DB.users.length>=MAX_USERS){msg.style.color="#8a1f1f";msg.textContent="وصل التطبيق للحد الأقصى ("+MAX_USERS+" مستخدم) — تواصل مع الأدمن.";return;}
+  DB.users.push({username:name,pass:await sha256(pass),role:"farmer",plan:"free",monthlyFee:null,paidUntil:null,status:"pending",requestedAt:new Date().toISOString(),created:new Date().toISOString()});
+  saveDB(DB);
+  msg.style.color="#1b6b2e";msg.textContent="تم إرسال طلبك بنجاح — حسابك في انتظار موافقة الأدمن، وهتقدر تدخل بعد ما يوافق.";
+  document.getElementById("regUser").value="";document.getElementById("regPass").value="";
+}
+function approveUser(name){
+  const me=currentUser();if(!me||me.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
+  const x=DB.users.find(u=>u.username===name);if(!x)return;
+  x.status="approved";saveDB(DB);renderAccount();alert("تم قبول "+name+" — يقدر يدخل دلوقتي.");
+}
+function rejectUser(name){
+  const me=currentUser();if(!me||me.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
+  const x=DB.users.find(u=>u.username===name);if(!x)return;
+  if(!confirm("رفض طلب "+name+"؟ الحساب هيفضل مرفوضًا وما يقدرش يدخل."))return;
+  x.status="rejected";saveDB(DB);renderAccount();
+}
+function renderPendingList(){
+  const el=document.getElementById("pendingList");if(!el)return;
+  const pend=DB.users.filter(x=>x.status==="pending");
+  const rej=DB.users.filter(x=>x.status==="rejected");
+  let h="";
+  if(!pend.length)h+="<div class='note'>لا توجد طلبات معلقة حاليًا.</div>";
+  else h+=pend.map(x=>"<div class='plant'><b>"+esc(x.username)+"</b> <span class='badge grey'>في انتظار الموافقة</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">✅ قبول</button> <button class='small warn' onclick=\"rejectUser('"+esc(x.username)+"')\">❌ رفض</button></div>").join("");
+  if(rej.length)h+="<h3>طلبات مرفوضة</h3>"+rej.map(x=>"<div class='plant'><b>"+esc(x.username)+"</b> <span class='badge red'>مرفوض</span><br>تاريخ الطلب: "+fmtDate(x.requestedAt||x.created)+"<br><button class='small' onclick=\"approveUser('"+esc(x.username)+"')\">قبول بعد الرفض</button> <button class='small warn' onclick=\"deleteUser('"+esc(x.username)+"')\">حذف نهائي</button></div>").join("");
+  el.innerHTML=h;
+}
+/* ===== الإشراف: قسم مقفول يفتحه الأدمن =====
+   افتراضيًا مقفول للكل: التبويب ظاهر لكنه يعرض رسالة إغلاق.
+   الأدمن يفتحه/يقفله من لوحة تحكمه. لما يتفتح: المزارع يكتب سؤاله،
+   والمشرف (مهندس زراعي، دور "supervisor") أو الأدمن يجاوب عليه.
+   الأسئلة والإجابات تُحفظ في DB.questions وتُصدَّر مع النسخة الاحتياطية. */
+function supOpen(){return !!(DB.supervision&&DB.supervision.open);}
+function roleName(r){return r==="admin"?"أدمن":r==="supervisor"?"مشرف":"مزارع";}
+function renderSupControl(){
+  const el=document.getElementById("supControl");if(!el)return;
+  const open=supOpen();
+  el.innerHTML="<div>الحالة الحالية: <b>"+(open?"🟢 مفتوح — المزارعون يقدرون يسألوا والمشرف يجاوب":"🔒 مغلق — يظهر للمستخدمين رسالة أنه مغلق حاليًا")+"</b></div>"
+    +"<button onclick=\"toggleSupervision()\">"+(open?"🔒 قفل قسم الإشراف":"🟢 فتح قسم الإشراف")+"</button>";
+}
+function toggleSupervision(){
+  const me=currentUser();if(!me||me.role!=="admin"){alert("فتح وقفل قسم الإشراف للأدمن فقط.");return;}
+  if(!DB.supervision)DB.supervision={open:false};
+  DB.supervision.open=!DB.supervision.open;
+  saveDB(DB);renderSupControl();renderSupervision();
+  alert(DB.supervision.open?"تم فتح قسم الإشراف — المزارعون يقدروا يسألوا دلوقتي.":"تم قفل قسم الإشراف — سيظهر للمستخدمين أنه مغلق حاليًا.");
+}
+function renderSupervision(){
+  const el=document.getElementById("supervisionBody");if(!el)return;
+  const u=currentUser();
+  if(!supOpen()){
+    el.innerHTML="<div class='warnbox' style='font-size:19px'>🔒 <b>قسم الإشراف مغلق حاليًا — هيتفتح قريب.</b><br>لما الأدمن يفتح القسم هتقدر تسأل المهندس الزراعي المشرف عن أي مشكلة في زراعتك ويجاوبك هنا.</div>";
+    return;
+  }
+  const canAnswer=u&&(u.role==="admin"||u.role==="supervisor");
+  const qs=(DB.questions||[]).slice().reverse();
+  let h="<div class='note'>اسأل المهندس الزراعي المشرف عن أي مشكلة في زراعتك — اكتب سؤالك بالأسفل، وسيجاوبك هنا.</div>"
+    +"<label>اكتب سؤالك للمهندس المشرف</label>"
+    +"<textarea id='supQText' placeholder='مثال: ورق القلقاس فيه بقع بنية، أعمل إيه؟'></textarea>"
+    +"<button onclick=\"askQuestion()\">إرسال السؤال</button>";
+  if(!qs.length)h+="<p>لا توجد أسئلة بعد — كن أول من يسأل.</p>";
+  else h+=qs.map(q=>"<div class='plant'><b>❓ "+esc(q.asker)+":</b> "+esc(q.text)+"<br><span style='font-size:15px;color:#555'>"+fmtDate(q.date)+"</span>"
+    +(q.answer?"<div style='margin-top:8px;background:#eef7ee;border-radius:10px;padding:10px'><b>✅ إجابة "+esc(q.answeredBy||"المشرف")+":</b> "+esc(q.answer)+"</div>"
+      :canAnswer?"<div style='margin-top:8px'><label>إجابتك كمشرف</label><textarea id='supAns-"+q.id+"' placeholder='اكتب الإجابة هنا'></textarea><button class='small' onclick=\"answerQuestion('"+q.id+"')\">إرسال الإجابة</button></div>"
+      :"<div style='margin-top:8px;color:#8a6d00'>⏳ في انتظار إجابة المهندس المشرف.</div>")
+    +"</div>").join("");
+  el.innerHTML=h;
+}
+function askQuestion(){
+  const u=currentUser();if(!u){alert("سجّل الدخول أولًا.");return;}
+  if(!supOpen()){alert("قسم الإشراف مغلق حاليًا — هيتفتح قريب.");return;}
+  const t=(document.getElementById("supQText").value||"").trim();
+  if(!t){alert("اكتب سؤالك أولًا.");return;}
+  if(!DB.questions)DB.questions=[];
+  DB.questions.push({id:"q"+Date.now(),asker:u.username,text:t,answer:null,answeredBy:null,date:new Date().toISOString()});
+  saveDB(DB);renderSupervision();alert("تم إرسال سؤالك للمهندس المشرف — ستظهر إجابته هنا.");
+}
+function answerQuestion(id){
+  const u=currentUser();if(!u||(u.role!=="admin"&&u.role!=="supervisor")){alert("الإجابة للمشرف أو الأدمن فقط.");return;}
+  const q=(DB.questions||[]).find(x=>x.id===id);if(!q)return;
+  const a=(document.getElementById("supAns-"+id).value||"").trim();
+  if(!a){alert("اكتب الإجابة أولًا.");return;}
+  q.answer=a;q.answeredBy=u.username;saveDB(DB);renderSupervision();alert("تم نشر الإجابة.");
+}
+function logout(){sessionStorage.removeItem(SESSION_KEY);location.reload();}
+function enterApp(){
+  const u=currentUser();if(!u)return;
+  if(u.status!=="approved"){sessionStorage.removeItem(SESSION_KEY);document.getElementById("authCard").classList.remove("hidden");document.getElementById("app").classList.add("hidden");alert(u.status==="pending"?"حسابك لسه في انتظار موافقة الأدمن.":"تم رفض طلب حسابك. تواصل مع الأدمن.");return;}
+  applyLabels();
+  document.getElementById("authCard").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("topbar").style.display="flex";
+  document.getElementById("bottomnav").style.display="flex";
+  document.getElementById("whoami").textContent="👤 "+u.username+" — "+roleName(u.role);
+  document.getElementById("netstat").textContent=navigator.onLine?"● متصل":"● أوفلاين (البيانات محفوظة على الجهاز)";
+  initForms();renderAll();updateSubBanner();
+  if(u.role!=="admin"&&!subActive(u))showTab("account");
+}
+function showTab(t){
+  const _su=currentUser();
+  if(_su&&_su.role!=="admin"&&t==="plantings"&&!subActive(_su)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن لاستئناف استخدام الزراعات. بياناتك محفوظة ولن تُحذف.");t="account";}
+  ["plantings","crops","diag","supervision","account"].forEach(x=>{
+    document.getElementById("tab-"+x).classList.toggle("hidden",x!==t);
+    document.getElementById("nav-"+x).classList.toggle("active",x===t);
+  });
+  if(t==="supervision")renderSupervision();
+  window.scrollTo(0,0);
+}
+function setField(id,val){const el=document.getElementById(id);if(el.tagName==="SELECT"){if(![...el.options].some(o=>o.value===val)){const o=document.createElement("option");o.value=val;o.textContent=val;el.appendChild(o);}el.value=val;}else el.value=val;}
+
+/* ===== النماذج ===== */
+function initForms(){
+  const cs=document.getElementById("npCrop");cs.innerHTML=CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+(c.priority?" ⭐":"")+"</option>").join("")+"<option value='custom'>غير ذلك — محصول مش في القائمة</option>";
+  const dg=document.getElementById("dgCrop");dg.innerHTML=CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+"</option>").join("")+"<option value='custom'>غير ذلك — محصول مش في القائمة</option><option>لا أعلم</option>";
+  const ed=document.getElementById("edCrop");ed.innerHTML=CROPS.map(c=>"<option value='"+c.id+"'>"+esc(c.name)+"</option>").join("");
+  const gv=document.getElementById("npGov");gv.innerHTML=GOVS.map(g=>"<option>"+g+"</option>").join("")+"<option>غير ذلك</option>";
+  document.getElementById("npDate").value=new Date().toISOString().slice(0,10);
+  fillVarieties();
+  document.getElementById("symptomChips").innerHTML=SYMPTOMS.map(s=>"<span class='chip' data-s='"+esc(s)+"' onclick='this.classList.toggle(\"on\")'>"+esc(s)+"</span>").join("");
+  document.getElementById("dgPhoto").addEventListener("change",e=>{
+    const f=e.target.files[0];if(!f)return;if(f.size>1500000){alert("الصورة كبيرة — اختر صورة أصغر من 1.5 ميجا حتى تُحفظ في النسخة الاحتياطية.");return;}
+    const r=new FileReader();r.onload=()=>{const im=document.getElementById("dgPreview");im.src=r.result;im.classList.remove("hidden");im.dataset.url=r.result;};r.readAsDataURL(f);
+  });
+}
+function fillVarieties(){
+  const cid=document.getElementById("npCrop").value;
+  if(cid==="custom"){document.getElementById("npVariety").innerHTML=["لا أعلم","غير ذلك"].map(x=>"<option>"+esc(x)+"</option>").join("");toggleCustom("npVariety","customVarietyBox");return;}
+  const c=cropById(cid);
+  const v=document.getElementById("npVariety");
+  v.innerHTML=["لا أعلم","غير ذلك"].concat(c.varieties).map(x=>"<option>"+esc(x)+"</option>").join("");
+  toggleCustom("npVariety","customVarietyBox");
+}
+function renderAll(){renderPlantings();renderCrops();renderSupervision();renderAccount();}
+
+/* ===== الزراعات ===== */
+function showNewPlanting(){document.getElementById("newPlanting").classList.remove("hidden");window.scrollTo(0,0);}
+function resolveOther(selectId,customId){
+  const v=document.getElementById(selectId).value;
+  if(v==="غير ذلك"){const t=(document.getElementById(customId).value||"").trim();return t||"غير ذلك";}
+  return v;
+}
+function savePlanting(){
+  const u=currentUser();if(!u)return;
+  if(u.role!=="admin"&&!subActive(u)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن أولًا. بياناتك محفوظة.");return;}
+  const cropId=document.getElementById("npCrop").value;
+  if(cropId==="custom"&&!document.getElementById("customCropName").value.trim()){alert("اخترت «غير ذلك» للمحصول — اكتب اسم المحصول أولًا.");return;}
+  const areaVal=parseFloat(document.getElementById("npArea").value);
+  const p={id:"p"+Date.now(),owner:u.username,cropId,
+  customCropName:cropId==="custom"?document.getElementById("customCropName").value.trim():"",
+  customCropDesc:cropId==="custom"?document.getElementById("customCropDesc").value.trim():"",
+  customCropPlan:cropId==="custom"?document.getElementById("customCropPlan").value.trim():"",
+  customSearchUrl:(window.__customSearch&&window.__customSearch.url)||"",
+  variety:resolveOther("npVariety","customVarietyText"),gov:resolveOther("npGov","customGovText"),soil:resolveOther("npSoil","customSoilText"),irr:resolveOther("npIrr","customIrrText"),areaValue:isNaN(areaVal)?null:areaVal,areaUnit:document.getElementById("npUnit").value,date:document.getElementById("npDate").value||new Date().toISOString().slice(0,10),yieldActual:null,yieldUnit:"",salePrice:null,closed:false,created:new Date().toISOString()};
+  DB.plantings.push(p);saveDB(DB);
+  document.getElementById("newPlanting").classList.add("hidden");renderPlantings();
+  alert("تم حفظ الزرعة. ستظهر خطة التسميد بالأسفل — اضغط على الزرعة لعرضها.");
+}
+function planSteps(p){
+  const c=cropObjOf(p);const af=areaFeddan(p);
+  return c.steps.map(s=>{
+    const total=(af!=null&&s.perFeddan)?(s.perFeddan*af):null;
+    const date=p.date?addDays(p.date,s.day):null;
+    const overdue=date&&new Date(date)<new Date()&&!p.closed;
+    return {label:s.label,date,total,unit:s.unit,overdue};
+  });
+}
+function renderPlantings(){
+  const _u=currentUser();
+  if(_u&&_u.role!=="admin"&&!subActive(_u)){document.getElementById("myTotal").textContent="—";document.getElementById("plantingList").innerHTML="<div class='card warnbox'>⚠️ <b>اشتراكك انتهى</b> — "+esc(subStatus(_u).label)+". دخول الزراعات مقفول حتى تجدد اشتراكك عند الأدمن. بياناتك محفوظة ولن تُحذف.</div>";return;}
+  const list=visiblePlantings();
+  document.getElementById("myTotal").textContent=fmt(list.reduce((s,p)=>s+plantingCost(p.id),0))+" جنيه";
+  const el=document.getElementById("plantingList");
+  if(!list.length){el.innerHTML="<div class='card'>لا توجد زراعات بعد. سجّل أول زرعة من الزر أعلاه.</div>";return;}
+  el.innerHTML=list.map(p=>{
+    const c=cropObjOf(p);const cost=plantingCost(p.id);const af=areaFeddan(p);
+    const steps=planSteps(p);
+    const next=steps.find(s=>s.date&&new Date(s.date)>=new Date());
+    const late=steps.filter(s=>s.overdue);
+    return "<div class='plant'><b style='font-size:21px'>"+esc(c.name)+" ⭐".replace(" ⭐","")+"</b> "+(c.priority?"<span class='badge'>أولوية المنوفية</span>":"")+"<br>"
+    +"الصنف: "+esc(p.variety)+" | المحافظة: "+esc(p.gov)+" | التربة: "+esc(p.soil)+" | الري: "+esc(p.irr)+"<br>"
+    +"المساحة: "+esc(areaLabel(p))+" | تاريخ الزراعة: "+fmtDate(p.date)+" | صاحب الزرعة: "+esc(p.owner)+"<br>"
+    +(late.length?"<span class='badge red'>⚠️ تسميد فات ميعاده: "+late.length+" خطوة</span> ":"")
+    +(next?"<span class='badge'>التسميد الجاي: "+esc(next.label)+" — "+fmtDate(next.date)+"</span>":"")
+    +"<br>صرفت حتى الآن: <b>"+fmt(cost)+" جنيه</b>"+(af?" (تكلفة الفدان: "+fmt(cost/af)+" جنيه)":"")
+    +"<br>إجمالي المبيعات حتى الآن: <b>"+fmt(plantingSalesTotal(p.id))+" جنيه</b>"
+    +"<div><button class='small' onclick=\"toggleDetail('"+p.id+"')\">"+esc(L("viewPlanBtn"))+"</button></div>"
+    +"<div id='det-"+p.id+"' class='hidden'>"+plantingDetail(p,c,steps,cost)+"</div></div>";
+  }).join("");
+}
+function toggleDetail(id){document.getElementById("det-"+id).classList.toggle("hidden");}
+function plantingDetail(p,c,steps,cost){
+  const af=areaFeddan(p);
+  let h="<h3>خطة التسميد (إرشادية بالفدان)</h3><div class='note'>"+esc(COMMON_GLOSSARY)+"</div><div class='warnbox'>"+esc(withCommonNames(DB.cropEdits[c.id]?DB.cropEdits[c.id].fert:c.fert))+"</div>";
+  if(p.customSearchUrl)h+="<div class='note'>🔍 نتيجة البحث على النت عن هذا المحصول: <a href='"+esc(p.customSearchUrl)+"' target='_blank'>فتح البحث</a></div>";
+  if(p.customCropDesc)h+="<div>الشرح الذي كتبته: "+esc(p.customCropDesc)+"</div>";
+  h+="<table><tr><th>التاريخ</th><th>الخطوة</th><th>الكمية الكلية لمساحتك</th><th>الحالة</th></tr>";
+  steps.forEach(s=>{h+="<tr><td>"+fmtDate(s.date)+"</td><td>"+esc(withCommonNames(s.label))+"</td><td>"+(s.total!=null?fmt(s.total)+" "+esc(s.unit):"بالفدان — حدّد المساحة لحساب الكمية")+"</td><td>"+(s.overdue?"<span class='badge red'>فات ميعاده</span>":"<span class='badge'>قادم</span>")+"</td></tr>";});
+  h+="</table><p style='font-size:16px'>الإنتاجية المتوقعة: "+esc(c.yield)+"</p>";
+  h+="<h3>"+esc(L("dailyLogTitle"))+"</h3>";
+  h+="<div class='row'><select id='lgType-"+p.id+"'><option>ري</option><option>تسميد</option><option>رش</option><option>حصاد</option><option>أخرى</option></select></div>"
+   +"<label style='font-size:17px'>تكلفة العملية بالجنيه — مثال: تكلفة الري / السماد / الرش / الحصاد بالمعدة</label>"
+   +"<input id='lgOpCost-"+p.id+"' type='number' min='0' step='any' placeholder='تكلفة العملية بالجنيه'>"
+   +"<label style='font-size:17px'>تكلفة العمالة بالجنيه — لو الفلاح عملها بنفسه حط 0</label>"
+   +"<input id='lgLaborCost-"+p.id+"' type='number' min='0' step='any' placeholder='تكلفة العمالة بالجنيه (0 لو بنفسك)'>"
+   +"<input id='lgNote-"+p.id+"' placeholder='ملاحظة (اختياري) — مثال: سمدت يوريا'>"
+   +"<button onclick=\"addLog('"+p.id+"')\">"+esc(L("addLogBtn"))+"</button>";
+  const logs=DB.logs.filter(l=>l.plantingId===p.id);
+  h+=logs.length?"<table><tr><th>التاريخ</th><th>النوع</th><th>تكلفة العملية</th><th>تكلفة العمالة</th><th>الإجمالي</th><th>ملاحظة</th></tr>"+logs.map(l=>"<tr><td>"+fmtDate(l.date)+"</td><td>"+esc(l.type)+"</td><td>"+fmt(logOpCost(l))+" جنيه</td><td>"+fmt(logLaborCost(l))+" جنيه</td><td><b>"+fmt(logTotal(l))+" جنيه</b></td><td>"+esc(l.note||"")+"</td></tr>").join("")+"</table>":"<p>لا توجد سجلات بعد.</p>";
+  h+="<h3>"+esc(L("salesTitle"))+"</h3>";
+  h+="<div class='note'>المحصول ممكن ما يتباعش مرة واحدة — مثال البرسيم ممكن يتباع 20 مرة جزء جزء. سجل كل بيعة لوحدها هنا، والإجمالي بيتجمع أول بأول.</div>";
+  h+="<label>كمية البيع (اختياري — لو عارفها)</label><div class='row'><input id='slQty-"+p.id+"' type='number' min='0' step='any' placeholder='مثال: 2'><select id='slQtyUnit-"+p.id+"'><option>طن</option><option>أردب</option><option>كجم</option><option>حشة</option></select></div>"
+   +"<label>قيمة المبيعات بالجنيه <span style='color:#c00'>*</span> (إجبارية)</label>"
+   +"<input id='slValue-"+p.id+"' type='number' min='0' step='any' placeholder='قيمة هذه البيعة بالجنيه'>"
+   +"<input id='slNote-"+p.id+"' placeholder='ملاحظة (اختياري) — مثال: بعت للتاجر أحمد'>"
+   +"<button onclick=\"addSale('"+p.id+"')\">"+esc(L("addSaleBtn"))+"</button>";
+  const sales=plantingSales(p.id);
+  h+=sales.length?"<table><tr><th>التاريخ</th><th>الكمية</th><th>قيمة البيع</th><th>ملاحظة</th></tr>"+sales.map(s=>"<tr><td>"+fmtDate(s.date)+"</td><td>"+(s.qty!=null?fmt(s.qty)+" "+esc(s.qtyUnit||""):"—")+"</td><td><b>"+fmt(s.value)+" جنيه</b></td><td>"+esc(s.note||"")+"</td></tr>").join("")+"</table><div>إجمالي المبيعات حتى الآن: <b>"+fmt(plantingSalesTotal(p.id))+" جنيه</b> ("+sales.length+" بيعة)</div>":"<p>لا توجد مبيعات مسجلة بعد.</p>";
+  h+="<h3>"+esc(L("seasonTitle"))+"</h3>";
+  h+="<div class='note'>الربح يُحسب من إجمالي المبيعات المسجلة في قسم المبيعات بالأعلى ناقص إجمالي التكاليف — سجل كل بيعة لوحدها حتى لو المحصول اتباع على 20 مرة.</div>";
+  h+="<label>الإنتاجية الفعلية (اختياري)</label><div class='row'><input id='yd-"+p.id+"' type='number' min='0' step='any' placeholder='مثال: 10' value='"+(p.yieldActual||"")+"'><select id='yu-"+p.id+"'><option>طن</option><option>أردب</option><option>كجم</option></select></div>"
+   +"<label>سعر البيع (جنيه لكل وحدة — اختياري، للمرجع فقط)</label><input id='sp-"+p.id+"' type='number' min='0' step='any' placeholder='مثال: 5000' value='"+(p.salePrice||"")+"'>"
+   +"<button onclick=\"closeSeason('"+p.id+"')\">"+esc(L("calcProfitBtn"))+"</button><div id='season-"+p.id+"'></div>";
+  if(p.closed){h+="<div id='seasonSaved-"+p.id+"'>"+seasonHtml(p,cost)+"</div>";}
+  return h;
+}
+function seasonHtml(p,cost){
+  const sales=plantingSales(p.id);
+  const salesTotal=plantingSalesTotal(p.id);
+  const sp=plantingCostSplit(p.id);
+  const c=cropObjOf(p);const af=areaFeddan(p);
+  /* الإيراد = إجمالي المبيعات المتراكمة (بيعة ورا بيعة). توافق رجعي:
+     زرعات قديمة بلا مبيعات مسجلة لكن فيها إنتاجية فعلية × سعر بيع تُحسب منها. */
+  let revenue=salesTotal, revenueNote="";
+  if(sales.length===0&&p.yieldActual!=null&&p.salePrice!=null){revenue=p.yieldActual*p.salePrice;revenueNote=" (من الإنتاجية الفعلية × سعر البيع المسجل قبل إضافة قسم المبيعات)";}
+  const profit=revenue-cost;
+  let rec=[];
+  if(profit>=0)rec.push("الموسم رابح — حافظ على نفس خطة التسميد والري.");
+  else rec.push("الموسم خاسر — راجع أكبر بند تكلفة في السجل (غالبًا التسميد أو العمالة) وقلّله الموسم الجاي.");
+  if(sales.length===0)rec.push("لم تسجل أي مبيعات بعد — سجل كل بيعة في قسم «المبيعات» بالأعلى (حتى لو المحصول يتباع على أجزاء) ليظهر الربح الحقيقي.");
+  if(p.yieldActual!=null&&af&&c.yield){rec.push("قارن إنتاجيتك الفعلية ("+p.yieldActual+" "+p.yieldUnit+" لمساحة "+areaLabel(p)+") بالإنتاجية المتوقعة للمحصول: "+c.yield+".");}
+  rec.push("لا تزرع نفس المحصول المجهد في نفس الأرض الموسم الجاي بدون دورة زراعية (خاصة القلقاس).");
+  rec.push("راجع جرعات التسميد مع الإرشاد الزراعي قبل الموسم الجاي، فالجرعات هنا إرشادية.");
+  return "<div class='card'><div>إجمالي التكلفة: <b>"+fmt(cost)+" جنيه</b> (منها تكلفة عمليات: "+fmt(sp.op)+" جنيه + تكلفة عمالة: "+fmt(sp.labor)+" جنيه)</div><div>إجمالي المبيعات: <b>"+fmt(revenue)+" جنيه</b> ("+sales.length+" بيعة"+revenueNote+")</div>"
+  +"<div class='total' style='color:"+(profit>=0?"#1b6b2e":"#8a1f1f")+"'>"+(profit>=0?"ربح: ":"خسارة: ")+fmt(Math.abs(profit))+" جنيه</div>"
+  +"<h3>توصيات للموسم الجاي</h3><ul>"+rec.map(r=>"<li>"+esc(r)+"</li>").join("")+"</ul></div>";
+}
+function addLog(pid){
+  const _u=currentUser();if(_u&&_u.role!=="admin"&&!subActive(_u)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن أولًا. بياناتك محفوظة.");return;}
+  const type=document.getElementById("lgType-"+pid).value;
+  const opCost=parseFloat(document.getElementById("lgOpCost-"+pid).value);
+  const laborRaw=document.getElementById("lgLaborCost-"+pid).value;
+  const laborCost=laborRaw===""||laborRaw==null?0:parseFloat(laborRaw);
+  const note=document.getElementById("lgNote-"+pid).value;
+  if(isNaN(opCost)||opCost<0){alert("اكتب تكلفة العملية بالجنيه (رقم).");return;}
+  if(isNaN(laborCost)||laborCost<0){alert("اكتب تكلفة العمالة بالجنيه (رقم، أو 0 لو الفلاح عملها بنفسه).");return;}
+  const total=opCost+laborCost;
+  DB.logs.push({id:"l"+Date.now(),plantingId:pid,type,opCost,laborCost,cost:total,note,date:new Date().toISOString().slice(0,10)});
+  saveDB(DB);renderPlantings();alert("تمت الإضافة: تكلفة العملية "+fmt(opCost)+" جنيه + تكلفة العمالة "+fmt(laborCost)+" جنيه = "+fmt(total)+" جنيه. إجمالي ما صرفته على هذه الزرعة الآن: "+fmt(plantingCost(pid))+" جنيه.");
+}
+function addSale(pid){
+  const _u=currentUser();if(_u&&_u.role!=="admin"&&!subActive(_u)){alert("⚠️ اشتراكك انتهى — جدّد اشتراكك عند الأدمن أولًا. بياناتك محفوظة.");return;}
+  const value=parseFloat(document.getElementById("slValue-"+pid).value);
+  if(isNaN(value)||value<=0){alert("اكتب قيمة المبيعات بالجنيه (رقم أكبر من صفر) — هذه الخانة إجبارية *.");return;}
+  const qtyRaw=document.getElementById("slQty-"+pid).value;
+  const qty=qtyRaw===""||qtyRaw==null?null:parseFloat(qtyRaw);
+  if(qty!=null&&(isNaN(qty)||qty<0)){alert("كمية البيع لازم تكون رقمًا، أو اتركها فاضية لو مش عارفها.");return;}
+  const qtyUnit=document.getElementById("slQtyUnit-"+pid).value;
+  const note=document.getElementById("slNote-"+pid).value;
+  if(!DB.sales)DB.sales=[];
+  DB.sales.push({id:"s"+Date.now(),plantingId:pid,qty,qtyUnit,value,note,date:new Date().toISOString().slice(0,10)});
+  saveDB(DB);renderPlantings();alert("تم تسجيل البيعة: "+fmt(value)+" جنيه. إجمالي مبيعات هذه الزرعة حتى الآن: "+fmt(plantingSalesTotal(pid))+" جنيه.");
+}
+function closeSeason(pid){
+  const p=DB.plantings.find(x=>x.id===pid);if(!p)return;
+  const y=parseFloat(document.getElementById("yd-"+pid).value),sp=parseFloat(document.getElementById("sp-"+pid).value);
+  p.yieldActual=isNaN(y)?null:y;p.yieldUnit=document.getElementById("yu-"+pid).value;p.salePrice=isNaN(sp)?null:sp;p.closed=true;saveDB(DB);
+  document.getElementById("season-"+pid).innerHTML=seasonHtml(p,plantingCost(pid));
+}
+
+/* ===== المحاصيل ===== */
+function renderCrops(){
+  const q=(document.getElementById("cropSearch").value||"").trim();
+  const list=CROPS.filter(c=>!q||c.name.includes(q));
+  document.getElementById("cropList").innerHTML=list.map(c=>{
+    const edit=DB.cropEdits[c.id];
+    return "<div class='plant'><b style='font-size:21px'>"+esc(c.name)+"</b> "+(c.priority?"<span class='badge'>أولوية المنوفية ⭐</span>":"")+" <span class='badge grey'>"+esc(c.season)+"</span><br>"
+    +"ميعاد الزراعة: "+esc(c.planting)+"<br>التربة: "+esc(c.soil)+"<br>الري: "+esc(c.irrigation)+"<br>المحافظات: "+esc(c.gov)+"<br>"
+    +"الأصناف: "+esc(c.varieties.join("، "))+"<br>الإنتاجية المتوقعة: "+esc(c.yield)
+    +"<div class='note' style='margin:8px 0'>"+esc(COMMON_GLOSSARY)+"</div>"
+    +"<div class='warnbox'><b>برنامج التسميد الكيماوي (إرشادي بالفدان):</b><br>"+esc(withCommonNames(edit?edit.fert:c.fert))+(edit?"<br><small>آخر تعديل: "+esc(edit.source||"")+" — "+fmtDate(edit.date)+"</small>":"")+"</div>"
+    +"<b>الأمراض الشائعة:</b><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul></div>";
+  }).join("")||"<p>لا توجد نتائج.</p>";
+}
+
+/* ===== أمراض المحاصيل (التشخيص) ===== */
+function diagnose(){
+  const cropId=document.getElementById("dgCrop").value;
+  let c,customNote="";
+  if(cropId==="custom"){c={id:"custom",name:"محصول آخر (غير ذلك)",diseases:[]};customNote="هذا المحصول غير موجود في قاعدة بيانات التطبيق. ابحث عنه على النت من شاشة زراعة جديدة بزر «ابحث على النت»، أو راجع الإرشاد الزراعي.";}
+  else if(cropId==="لا أعلم"){c={id:"unknown",name:"محصول غير محدد",diseases:[].concat(...CROPS.map(x=>x.diseases))};customNote="لم تحدد المحصول — تُعرض أشهر الأمراض من كل المحاصيل. حدّد المحصول لنتيجة أدق.";}
+  else c=cropById(cropId);
+  const text=(document.getElementById("dgText").value||"")+" "+[...document.querySelectorAll("#symptomChips .chip.on")].map(x=>x.dataset.s).join(" ");
+  const photo=document.getElementById("dgPreview").dataset.url||"";
+  if(!text.trim()){alert("اكتب الأعراض أو اختر عرضًا واحدًا على الأقل.");return;}
+  let scored=c.diseases.map(d=>{
+    let score=0;const hay=d.s+" "+d.n;
+    SYMPTOMS.forEach(s=>{if(text.includes(s)&&hay.includes(s))score+=2;});
+    ["اصفرار","بقع","بثرات","ذبول","ثقوب","تعفن","تجعد","يرقات","نمو أبيض"].forEach(k=>{if(text.includes(k)&&hay.includes(k))score+=1;});
+    return {d,score};
+  }).sort((a,b)=>b.score-a.score);
+  const best=scored[0];
+  const u=currentUser();
+  DB.diagnoses.push({id:"d"+Date.now(),owner:u?u.username:"",cropId,text:text.trim(),result:best?best.d.n:"لا توجد مطابقة واضحة",photo:photo?true:false,date:new Date().toISOString()});
+  saveDB(DB);
+  let h="<div class='card'>";
+  if(customNote)h+="<div class='note'>"+esc(customNote)+"</div>";
+  if(best&&best.score>0){h+="<h3>الأقرب لتشخيصك: "+esc(best.d.n)+"</h3><p><b>الأعراض:</b> "+esc(best.d.s)+"</p><p><b>الحل المقترح:</b> "+esc(best.d.t)+"</p>";}
+  else{h+="<h3>لا توجد مطابقة واضحة من الأعراض المكتوبة</h3><p>جرّب إضافة تفاصيل أكثر (لون البقع، مكانها على الورقة أو الساق، هل يوجد بودرة أو نمو أبيض؟)، أو أضف صورة، أو راجع الإرشاد الزراعي.</p>";}
+  h+="<p><b>أمراض "+esc(c.name)+" الشائعة:</b></p><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul>";
+  if(photo)h+="<p>تم حفظ الصورة مع التشخيص (ستُصدَّر مع النسخة الاحتياطية).</p>";
+  h+="<p style='font-size:16px'>⚠️ التشخيص أولي. المبيدات والجرعات تُطابَق مع لجنة مبيدات الآفات الزراعية قبل الاستخدام.</p></div>";
+  document.getElementById("diagResult").innerHTML=h;
+}
+
+/* ===== الحساب والإدارة والنسخ الاحتياطي ===== */
+function renderAccount(){
+  const u=currentUser();if(!u)return;
+  const mine=DB.plantings.filter(p=>p.owner===u.username);
+  document.getElementById("accountInfo").innerHTML="اسم المستخدم: <b>"+esc(u.username)+"</b><br>الدور: <b>"+roleName(u.role)+"</b><br>عدد زراعاتك: "+mine.length+" | إجمالي مصاريفك: "+fmt(mine.reduce((s,p)=>s+plantingCost(p.id),0))+" جنيه<br>الاشتراك: <b>"+esc(subStatus(u).label)+"</b>"+(u.plan==="paid"&&u.monthlyFee!=null?" ("+fmt(u.monthlyFee)+" جنيه/شهر)":"")+(u.role!=="admin"&&!subActive(u)?"<br><span style='color:#8a1f1f'><b>⚠️ اشتراكك منتهي — جدّد عند الأدمن لاستئناف الزراعات. بياناتك محفوظة.</b></span>":"");
+  const isAdmin=u.role==="admin";
+  document.getElementById("adminCard").style.display=isAdmin?"block":"none";
+  if(isAdmin){
+    renderUserList(u);
+    renderPendingList();
+    renderSupControl();
+    loadCropEdit();
+    renderLabelEditor();
+  }
+}
+/* ===== إدارة الاشتراكات من لوحة الأدمن =====
+   لكل مستخدم: نوع الاشتراك (مجاني / مدفوع شهريًا)، المبلغ الشهري بالجنيه
+   (يحدده الأدمن)، وتاريخ "مدفوع حتى" (يُسجَّل عند الدفع). */
+function renderUserList(me){
+  document.getElementById("userList").innerHTML="<h3>المستخدمون ("+DB.users.length+" / "+MAX_USERS+")</h3>"
+  +"<div style='font-size:16px'>المجاني: دخول كامل بدون دفع. المدفوع شهريًا: يحدد الأدمن المبلغ، ويسجل «مدفوع حتى» تاريخًا معينًا عند الدفع. لو انتهى التاريخ يُقفل دخول المزارع للزراعات حتى يجدد، وبياناته تفضل محفوظة.</div>"
+  +DB.users.map((x,i)=>{
+    const s=subStatus(x);
+    return "<div class='plant'><b>"+esc(x.username)+"</b> — "+roleName(x.role)+" "+(x.status==="pending"?"<span class='badge grey'>في انتظار الموافقة</span>":x.status==="rejected"?"<span class='badge red'>مرفوض</span>":"<span class='badge'>مقبول</span>")+" "+subBadge(x)
+    +(x.plan==="paid"&&x.monthlyFee!=null?"<br>الاشتراك الشهري: "+fmt(x.monthlyFee)+" جنيه/شهر":"")
+    +"<br><label style='font-size:16px'>نوع الاشتراك</label><select id='subPlan-"+i+"'><option value='free'"+(x.plan!=="paid"?" selected":"")+">مجاني</option><option value='paid'"+(x.plan==="paid"?" selected":"")+">مدفوع شهريًا</option></select>"
+    +"<label style='font-size:16px'>المبلغ الشهري (جنيه) — يحدده الأدمن</label><input id='subFee-"+i+"' type='number' min='0' step='any' placeholder='مثال: 50' value='"+(x.monthlyFee!=null?x.monthlyFee:"")+"'>"
+    +"<label style='font-size:16px'>مدفوع حتى تاريخ (يُسجَّل عند الدفع)</label><input id='subUntil-"+i+"' type='date' value='"+(x.paidUntil||"")+"'>"
+    +"<button class='small' onclick=\"saveSubscription("+i+")\">حفظ الاشتراك</button> "
+    +(x.username!==me.username?"<button class='small' onclick=\"toggleRole('"+esc(x.username)+"')\">"+(x.role==="admin"?"إلغاء الأدمن":"تعيين أدمن")+"</button> <button class='small' onclick=\"resetPass('"+esc(x.username)+"')\">تغيير كلمة السر</button> <button class='small warn' onclick=\"deleteUser('"+esc(x.username)+"')\">حذف</button>":"(أنت)")
+    +"</div>";
+  }).join("");
+}
+function saveSubscription(i){
+  const me=currentUser();if(!me||me.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
+  const x=DB.users[i];if(!x)return;
+  const plan=document.getElementById("subPlan-"+i).value;
+  const feeRaw=document.getElementById("subFee-"+i).value;
+  const until=document.getElementById("subUntil-"+i).value||null;
+  if(plan==="paid"){
+    const fee=parseFloat(feeRaw);
+    if(isNaN(fee)||fee<=0){alert("للاشتراك المدفوع اكتب المبلغ الشهري بالجنيه (أكبر من صفر).");return;}
+    x.plan="paid";x.monthlyFee=fee;x.paidUntil=until;
+  }else{
+    x.plan="free";x.monthlyFee=null;x.paidUntil=null;
+  }
+  saveDB(DB);renderAccount();
+  alert("تم حفظ اشتراك "+x.username+": "+subStatus(x).label+(x.plan==="paid"?" ("+fmt(x.monthlyFee)+" جنيه/شهر)":""));
+}
+async function addUser(){
+  const u=currentUser();if(!u||u.role!=="admin"){alert("هذه العملية للأدمن فقط.");return;}
+  const name=document.getElementById("nuUser").value.trim(),pass=document.getElementById("nuPass").value,role=document.getElementById("nuRole").value;
+  if(name.length<3||pass.length<4){alert("اسم مستخدم 3 حروف على الأقل وكلمة سر 4 أحرف على الأقل.");return;}
+  if(DB.users.some(x=>x.username===name)){alert("اسم المستخدم موجود بالفعل.");return;}
+  if(DB.users.length>=MAX_USERS){alert("وصل التطبيق للحد الأقصى ("+MAX_USERS+" مستخدم).");return;}
+  DB.users.push({username:name,pass:await sha256(pass),role,plan:"free",monthlyFee:null,paidUntil:null,status:"approved",created:new Date().toISOString()});saveDB(DB);renderAccount();alert("تمت إضافة "+name+" ("+roleName(role)+") — الاشتراك الافتراضي: مجاني.");
+}
+async function toggleRole(name){
+  const x=DB.users.find(u=>u.username===name);if(!x)return;
+  x.role=x.role==="admin"?"farmer":(x.role==="supervisor"?"farmer":"admin");saveDB(DB);renderAccount();
+}
+async function resetPass(name){
+  const np=prompt("اكتب كلمة السر الجديدة لـ "+name+" (4 أحرف على الأقل):");if(!np||np.length<4)return;
+  const x=DB.users.find(u=>u.username===name);x.pass=await sha256(np);saveDB(DB);alert("تم تغيير كلمة السر.");
+}
+function deleteUser(name){
+  const u=currentUser();if(name===u.username){alert("لا يمكنك حذف حسابك.");return;}
+  if(!confirm("حذف المستخدم "+name+"؟ ستبقى زراعاته ظاهرة للأدمن."))return;
+  DB.users=DB.users.filter(x=>x.username!==name);saveDB(DB);renderAccount();
+}
+function loadCropEdit(){
+  const c=cropById(document.getElementById("edCrop").value);
+  const edit=DB.cropEdits[c.id];
+  document.getElementById("edFert").value=edit?edit.fert:c.fert;
+  document.getElementById("edSource").value=edit?edit.source||"":"";
+}
+function saveCropEdit(){
+  const u=currentUser();if(!u||u.role!=="admin"){alert("للأدمن فقط.");return;}
+  const id=document.getElementById("edCrop").value;
+  DB.cropEdits[id]={fert:document.getElementById("edFert").value,source:document.getElementById("edSource").value,date:new Date().toISOString()};
+  saveDB(DB);renderCrops();alert("تم حفظ التعديل.");
+}
+function exportBackup(){
+  const u=currentUser();if(!u)return;
+  const data={app:"تطبيق المزارعين",version:1,exported:new Date().toISOString(),exportedBy:u.username,
+    data:u.role==="admin"?DB:{users:DB.users.filter(x=>x.username===u.username),plantings:DB.plantings.filter(p=>p.owner===u.username),logs:DB.logs.filter(l=>DB.plantings.some(p=>p.id===l.plantingId&&p.owner===u.username)),sales:(DB.sales||[]).filter(s=>DB.plantings.some(p=>p.id===s.plantingId&&p.owner===u.username)),diagnoses:DB.diagnoses.filter(d=>d.owner===u.username),questions:(DB.questions||[]).filter(q=>q.asker===u.username),supervision:DB.supervision||{open:false},cropEdits:DB.cropEdits,labels:DB.labels||{}}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tطبيق-المزارعين-نسخة-"+u.username+"-"+new Date().toISOString().slice(0,10)+".json";a.click();
+}
+function importBackup(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const data=JSON.parse(r.result);const d=data.data||data;
+    if(!d.users||!d.plantings){alert("ملف غير صالح.");return;}
+    // دمج آمن: لا نستبدل مستخدمين موجودين، ونضيف فقط ما ليس موجودًا
+    d.users.forEach(x=>{normUser(x);if(!DB.users.some(y=>y.username===x.username))DB.users.push(x);});
+    DB.users.forEach(normUser);
+    d.plantings.forEach(p=>{if(!DB.plantings.some(y=>y.id===p.id))DB.plantings.push(p);});
+    (d.logs||[]).forEach(l=>{if(!DB.logs.some(y=>y.id===l.id))DB.logs.push(l);});
+    if(!DB.sales)DB.sales=[];
+    (d.sales||[]).forEach(s=>{if(!DB.sales.some(y=>y.id===s.id))DB.sales.push(s);});
+    (d.diagnoses||[]).forEach(x=>{if(!DB.diagnoses.some(y=>y.id===x.id))DB.diagnoses.push(x);});
+    if(!DB.questions)DB.questions=[];
+    (d.questions||[]).forEach(x=>{if(!DB.questions.some(y=>y.id===x.id))DB.questions.push(x);});
+    if(d.supervision)DB.supervision=d.supervision;
+    if(d.cropEdits)DB.cropEdits=Object.assign({},DB.cropEdits,d.cropEdits);
+    if(d.labels)DB.labels=Object.assign({},DB.labels||{},d.labels);
+    saveDB(DB);renderAll();alert("تم الاستيراد بنجاح. افتح تبويب زرعاتي للتأكد.");
+  }catch(e){alert("تعذّرت قراءة الملف.");}};
+  r.readAsText(f);
+}
+window.addEventListener("online",()=>{const n=document.getElementById("netstat");if(n)n.textContent="● متصل";});
+window.addEventListener("offline",()=>{const n=document.getElementById("netstat");if(n)n.textContent="● أوفلاين (البيانات محفوظة على الجهاز)";});
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}
+refreshAuth();
+if(currentUser())enterApp();
+</script>
+</body>
+</html>
