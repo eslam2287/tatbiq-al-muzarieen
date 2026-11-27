@@ -44,6 +44,26 @@ td,th{border:1px solid #ddd;padding:8px;text-align:right;vertical-align:top}
 img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 .chip{display:inline-block;border:2px solid #1b6b2e;border-radius:20px;padding:8px 14px;margin:4px;font-size:16px;background:#fff;cursor:pointer}
 .chip.on{background:#1b6b2e;color:#fff}
+/* مكتبة صور الأمراض: بطاقة لكل مرض بصورة مصغرة */
+.dg-grid{display:flex;flex-wrap:wrap;gap:8px}
+.dg-card{flex:1 1 46%;border:2px solid #cfe3c6;border-radius:12px;padding:8px;background:#fff;cursor:pointer;text-align:center}
+.dg-card img{width:100%;height:110px;object-fit:cover;border-radius:8px}
+.dg-card span{display:block;font-weight:700;font-size:16px;margin-top:6px}
+.dg-card.on{border-color:#1b6b2e;background:#e3f2dc}
+.dg-nophoto{height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;background:#f0f7ee;border-radius:8px}
+img.dg-photo{width:100%;max-height:320px;object-fit:cover;border-radius:12px;margin-bottom:8px}
+/* أقسام نموذج إضافة زراعة: عنوان واضح ومسافة تنفس */
+.form-section{border-top:2px dashed #cfe3c6;margin-top:16px;padding-top:6px}
+.form-section h3{color:#1b6b2e;font-size:20px;margin:10px 0 2px}
+.form-section .sec-hint{font-size:15px;color:#555;margin:0 0 4px}
+/* شاشة الترحيب */
+.hero{background:linear-gradient(160deg,#1b6b2e,#2e8b3f);color:#fff;border-radius:18px;padding:24px 16px 18px;margin:14px 0;text-align:center}
+.hero h1{font-size:34px;margin:6px 0 4px}
+.hero .hero-sub{font-size:17px;line-height:1.6;opacity:.96;margin:6px 0 12px}
+.hero button{background:#fff;color:#1b6b2e}
+.hero button.secondary{background:transparent;color:#fff;border:2px solid #fff}
+.hero .feat{text-align:right;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:16px;line-height:1.5}
+.hero .hero-foot{font-size:14px;opacity:.85;margin:10px 0 0}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px}
 .topbar button{width:auto;padding:8px 14px;font-size:16px;margin:0}
 </style>
@@ -65,6 +85,19 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
 
 <div class="note" id="syncNote">
   <b>مزامنة تلقائية:</b> بياناتك بتتزامن مع السيرفر، وبيشتغل أوفلاين كمان.
+</div>
+
+<!-- ===== شاشة الترحيب ===== -->
+<div class="hero" id="welcome">
+  <div style="font-size:52px;line-height:1">🌱</div>
+  <h1>تطبيق المزارعين</h1>
+  <p class="hero-sub">زراعة علمية لكل محاصيل مصر — خطط تسميد وري ورش، تسجيل تكاليف وأرباح، وتشخيص أمراض المحاصيل بالصور.</p>
+  <button onclick="goLogin()">دخول</button>
+  <button class="secondary" onclick="goRegister()">إنشاء حساب جديد</button>
+  <div class="feat">🌾 <b>خطط تسميد وري ورش</b> لكل المحاصيل حسب المحافظة والتربة والصنف</div>
+  <div class="feat">💰 <b>تكاليف وأرباح</b> — سجّل كل عملية بتكلفتها، والربح بيتحسب لوحده آخر الموسم</div>
+  <div class="feat">🔍 <b>تشخيص أمراض</b> — قارن صورتك بمكتبة صور الأمراض واعرف المرض والعلاج</div>
+  <p class="hero-foot">مجانًا — ويشتغل أوفلاين كمان. كل مزارع بيشوف بياناته هو بس.</p>
 </div>
 
 <!-- ===== تسجيل الدخول ===== -->
@@ -104,6 +137,9 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
     <div id="newPlanting" class="card">
       <h2 id="lblAddPlanting">إضافة زراعة</h2>
       <h3 id="lblNewPlanting">زرعة جديدة</h3>
+      <div class="form-section">
+      <h3>١ — المكان والمحصول</h3>
+      <p class="sec-hint">فين زرعت، وإيه المحصول والصنف.</p>
       <label>المحافظة * <button type="button" class="small secondary" onclick="setField('npGov','لا أعلم')">لا أعلم</button></label>
       <select id="npGov" onchange="toggleCustom('npGov','customGovBox');suggestSoil()"></select>
       <div id="customGovBox" class="hidden"><label>اكتب المحافظة / المكان</label><input id="customGovText" placeholder="مثال: قرية في محافظة أخرى"></div>
@@ -122,6 +158,10 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
       <label>الصنف / التقاوي <button type="button" class="small secondary" onclick="setField('npVariety','لا أعلم')">لا أعلم</button></label>
       <select id="npVariety" onchange="toggleCustom('npVariety','customVarietyBox')"></select>
       <div id="customVarietyBox" class="hidden"><label>اكتب الصنف / التقاوي</label><input id="customVarietyText" placeholder="مثال: صنف محلي من السوق"></div>
+      </div>
+      <div class="form-section">
+      <h3>٢ — التربة والري</h3>
+      <p class="sec-hint">نوع الأرض وطريقة الري — التربة بتتقترح تلقائي من المحافظة.</p>
       <label>نوع التربة <button type="button" class="small secondary" onclick="setField('npSoil','لا أعلم')">لا أعلم</button></label>
       <select id="npSoil" onchange="toggleCustom('npSoil','customSoilBox')"><option>طينية</option><option>رملية</option><option>طميية</option><option>صفراء</option><option>جيرية</option><option>غير ذلك</option><option>لا أعلم</option></select>
       <div id="customSoilBox" class="hidden"><label>اكتب نوع التربة</label><input id="customSoilText" placeholder="مثال: تربة مخلوطة طينية رملية"></div>
@@ -129,11 +169,16 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
       <label>طريقة الري <button type="button" class="small secondary" onclick="setField('npIrr','لا أعلم')">لا أعلم</button></label>
       <select id="npIrr" onchange="toggleCustom('npIrr','customIrrBox')"><option>غمر</option><option>تنقيط</option><option>رش</option><option>محوري</option><option>غير ذلك</option><option>لا أعلم</option></select>
       <div id="customIrrBox" class="hidden"><label>اكتب طريقة الري</label><input id="customIrrText" placeholder="مثال: ري بالرشاشات اليدوية"></div>
+      </div>
+      <div class="form-section">
+      <h3>٣ — المساحة والتاريخ</h3>
+      <p class="sec-hint">مساحة الزرعة وتاريخ الزراعة — عشان التسميد والتكلفة يتحسبوا صح.</p>
       <label>المساحة المزروعة</label>
       <div class="row"><input id="npArea" type="number" min="0" step="any" placeholder="مثال: 12">
       <select id="npUnit"><option value="فدان">فدان</option><option value="قيراط">قيراط</option><option value="لا أعلم">لا أعلم</option></select></div>
       <div style="font-size:16px;color:#555">الفدان = 24 قيراط. مثال: 12 قيراط = 0.5 فدان. التسميد والتكلفة والإنتاجية تُحسب بالفدان.</div>
       <label>تاريخ الزراعة</label><input id="npDate" type="date">
+      </div>
       <button id="btnSavePlanting" onclick="savePlanting()">حفظ الزرعة وعرض خطة التسميد</button>
       <button class="secondary" id="btnCancelPlanting" onclick="showTab('my')">إلغاء</button>
     </div>
@@ -178,8 +223,8 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
       <label>نوع التقاوي (اختياري)</label><select id="dgVariety" onchange="toggleCustom('dgVariety','dgCustomVarietyBox')"></select>
       <div id="dgCustomVarietyBox" class="hidden"><label>اكتب الصنف / التقاوي</label><input id="dgCustomVarietyText" placeholder="مثال: صنف محلي من السوق"></div>
       <div id="dgDiseaseBox">
-        <label>أمراض المحصول ده — دوس على المرض اللي شكله قريب</label>
-        <div id="dgDiseaseChips"></div>
+        <label>📸 مكتبة أمراض المحصول — دوس على المرض اللي شكله قريب من صورتك</label>
+        <div id="dgDiseaseChips" class="dg-grid"></div>
         <div id="dgDiseaseDetail"></div>
         <div id="dgDiseaseNote" class="note hidden"></div>
       </div>
@@ -190,8 +235,7 @@ img.preview{max-width:100%;border-radius:12px;margin-top:8px}
       <label>صور النبات (اختياري — لحد 3 صور، كل صورة أقل من 1.5 ميجا)</label>
       <input type="file" id="dgPhoto" accept="image/*" multiple>
       <div id="dgPhotoPreviews"></div>
-      <button type="button" class="secondary" onclick="window.open('https://lens.google.com/upload','_blank')">🔍 ابحث بالصورة على النت (عدسة جوجل)</button>
-      <div class="note" style="font-size:15px">التطبيق نفسه مش بيحلّل الصورة أوتوماتيك — عدسة جوجل هي اللي بتدور بالصورة وتقولك ده مرض إيه، ارفع نفس الصورة هناك.</div>
+      <div class="note" style="font-size:15px">التطبيق مش بيحلّل الصورة أوتوماتيك — قارن صورتك بصور الأمراض في المكتبة فوق، ودوس على المرض اللي شكله قريب.</div>
       <button id="btnDiagnose" onclick="diagnose()">شخّص المرض</button>
       <div id="diagResult"></div>
       <div class="warnbox">التشخيص هنا أولي فقط. أسماء المبيدات والجرعات يجب مطابقتها مع <b>لجنة مبيدات الآفات الزراعية</b> الحالية قبل الاستخدام، والجرعات إرشادية وتُراجع مع الإرشاد الزراعي.</div>
@@ -336,33 +380,33 @@ const CROPS = [
 {id:"qalqas",name:"القلقاس",season:"صيفي (7–9 أشهر)",planting:"منتصف فبراير – آخر أبريل، الأفضل مارس. الحصاد أكتوبر–نوفمبر",soil:"صفراء ثقيلة/خفيفة جيدة الصرف؛ لا يجود في الرملية والجيرية",irrigation:"غمر غزير متقارب؛ كل أسبوعين ثم كل أسبوع في يونيو ثم كل 4–5 أيام في يوليو؛ يُمنع الري قبل الحصاد بـ3 أسابيع",gov:"المنوفية (شنوان — الأكبر في مصر)، القليوبية، الشرقية، البحيرة",varieties:["المصري (كورمة كبيرة، 9 شهور)","الأمريكي (كورمات صغيرة، 7 شهور)"],yield:"8–12 طن/فدان (متوسط المنوفية الأحدث 14.6 طن/فدان)",priority:true,
  fert:"دليل المزارع — المنوفية: سماد بلدي 40 م³ + 200 كجم سوبر فوسفات + 100–150 كجم سلفات نشادر + 100 كجم سلفات بوتاسيوم بعد الإنبات وتُعاد في يوليو. ⚠️ تعارض موثق لم يُحسم: مصادر أخرى تذكر 200 كجم سلفات نشادر، وثالثة تذكر 300 كجم — راجع الإرشاد الزراعي قبل الاعتماد.",
  steps:[{day:0,label:"تجهيز: سماد بلدي 40 م³ + سوبر فوسفات 200 كجم/فدان",perFeddan:200,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد الإنبات: سلفات نشادر 100–150 كجم/فدان (تعارض موثق: مصادر أخرى 200 و300 كجم)",perFeddan:125,unit:"كجم سلفات نشادر"},{day:120,label:"تكتيف يوليو: سلفات بوتاسيوم 100 كجم/فدان + باقي النشادر",perFeddan:100,unit:"كجم سلفات بوتاسيوم"}],
- diseases:[{n:"لفحة الأوراق (الندوة المتأخرة)",s:"بقع بنية بنفسجية على حواف الورق مع إفرازات صمغية",t:"تقاوي سليمة + صرف جيد + دورة زراعية. المبيد حسب لجنة المبيدات."},{n:"العفن الطري",s:"تعفن الكورمات",t:"صرف جيد وعدم التغريق. المبيد حسب لجنة المبيدات."},{n:"نيماتودا تعقد الجذور",s:"عقد على الجذور وضعف نمو وذبول",t:"دورة زراعية ثلاثية أو خماسية. المبيد حسب لجنة المبيدات."}]},
+ diseases:[{n:"لفحة الأوراق (الندوة المتأخرة)",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Phytophthora_colocasiae_Scot_Nelson.jpg/960px-Phytophthora_colocasiae_Scot_Nelson.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع بنية بنفسجية على حواف الورق مع إفرازات صمغية",t:"تقاوي سليمة + صرف جيد + دورة زراعية. المبيد حسب لجنة المبيدات."},{n:"العفن الطري",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/8/84/Taro_%28Colocasia_esculenta%29_Bacterial_soft_rot_%2832107936316%29.jpg/960px-Taro_%28Colocasia_esculenta%29_Bacterial_soft_rot_%2832107936316%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"تعفن الكورمات",t:"صرف جيد وعدم التغريق. المبيد حسب لجنة المبيدات."},{n:"نيماتودا تعقد الجذور",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2b/Meloidogyne_javanica_on_Colocasia_esculenta.jpg/960px-Meloidogyne_javanica_on_Colocasia_esculenta.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"عقد على الجذور وضعف نمو وذبول",t:"دورة زراعية ثلاثية أو خماسية. المبيد حسب لجنة المبيدات."}]},
 {id:"wheat",name:"القمح",season:"شتوي",planting:"الوجه البحري: النصف الثاني من نوفمبر حتى أوائل ديسمبر",soil:"طينية خصبة جيدة الصرف",irrigation:"غمر: 4–5 ريات؛ رية المحاياة بعد 20–25 يومًا",gov:"كل الجمهورية؛ المنوفية، الشرقية، البحيرة، الدقهلية",varieties:["مصر 3","مصر 4","مصر 5","جيزة 171","سخا 95","سخا 96","سخا 97","سدس 15"],yield:"حسب الصنف والخدمة — راجع نشرة الموسم",priority:true,
  fert:"نشرة وزارة الزراعة/الإرشاد: فوسفور 15 كجم (100 كجم سوبر فوسفات) قبل آخر حرثة + بوتاسيوم 50 كجم سلفات بوتاسيوم عند التجهيز + 25 كجم بعد 100 يوم + آزوت 75 كجم N (163 كجم يوريا) على 3 دفعات: 20% عند الزراعة، 40% عند المحاياة، 40% عند الرية التالية. في الرملية: سوبر فوسفات 200 كجم/فدان.",
  steps:[{day:0,label:"قبل الزراعة: سوبر فوسفات 100 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان + 20% من الآزوت (33 كجم يوريا/فدان)",perFeddan:33,unit:"كجم يوريا"},{day:22,label:"رية المحاياة: 40% من الآزوت (65 كجم يوريا/فدان)",perFeddan:65,unit:"كجم يوريا"},{day:47,label:"الرية التالية (حمل السنابل): 40% من الآزوت (65 كجم يوريا/فدان)",perFeddan:65,unit:"كجم يوريا"},{day:100,label:"سلفات بوتاسيوم ذواب 25 كجم/فدان مع مياه الري",perFeddan:25,unit:"كجم سلفات بوتاسيوم"}],
- diseases:[{n:"الصدأ الأصفر (الأخطر)",s:"بثرات صفراء مسحوقية في خطوط طولية على الورقة، بودرة صفراء على الأصابع",t:"أصناف مقاومة أولًا + مبيد (تيبوكونازول/ديفينوكونازول/أزوكسي ستروبين) حسب لجنة المبيدات."},{n:"الصدأ البرتقالي",s:"بثرات بنية فاتحة مستديرة مبعثرة على الأوراق",t:"نفس مبيدات الأصداء حسب اللجنة."},{n:"البياض الدقيقي",s:"بقع بيضاء قطنية تتحول للرمادي مع اصفرار",t:"اعتدال الآزوت + مبيد حسب اللجنة."},{n:"المن",s:"اصفرار قمة الأوراق وتقزم النبات",t:"مكافحة المن (ينقل فيروس التقزم الأصفر)."}]},
+ diseases:[{n:"الصدأ الأصفر (الأخطر)",photo:"https://upload.wikimedia.org/wikipedia/commons/d/dd/Stripe_rust_on_wheat.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"بثرات صفراء مسحوقية في خطوط طولية على الورقة، بودرة صفراء على الأصابع",t:"أصناف مقاومة أولًا + مبيد (تيبوكونازول/ديفينوكونازول/أزوكسي ستروبين) حسب لجنة المبيدات."},{n:"الصدأ البرتقالي",photo:"https://upload.wikimedia.org/wikipedia/commons/d/d4/Wheat_leaf_rust_on_wheat.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"بثرات بنية فاتحة مستديرة مبعثرة على الأوراق",t:"نفس مبيدات الأصداء حسب اللجنة."},{n:"البياض الدقيقي",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Blumeria_graminis_on_winter_wheat.JPG/960px-Blumeria_graminis_on_winter_wheat.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع بيضاء قطنية تتحول للرمادي مع اصفرار",t:"اعتدال الآزوت + مبيد حسب اللجنة."},{n:"المن",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/S.avenae.png/960px-S.avenae.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"اصفرار قمة الأوراق وتقزم النبات",t:"مكافحة المن (ينقل فيروس التقزم الأصفر)."}]},
 {id:"maize",name:"الذرة الشامية",season:"صيفي",planting:"الدلتا: مايو – منتصف يونيو. شرق العوينات: أول مارس و15 يوليو – 15 أغسطس",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط / رش محوري. المحاياة بعد 18–21 يومًا",gov:"كل الجمهورية",varieties:["جيزة 10","جيزة 122","جيزة 131","جيزة 168","جيزة 178","هاي تك 2030","بايونير 30ك8"],yield:"حسب الهجين والخدمة",priority:true,
  fert:"نشرة الإرشاد: أراضٍ قديمة: آزوت 260 كجم يوريا أو 360 كجم نترات نشادر على دفعتين أو 3. أراضٍ جديدة: 360–450 كجم نترات نشادر حقنًا + جرعة تنشيطية سلفات نشادر. ممنوع الآزوت بعد التزهير. فوسفور/بوتاسيوم: مصادر متضاربة (200 كجم سوبر + 50 بوتاسيوم مقابل 50 سوبر فقط) — لم يُعتمد رقم موحد.",
  steps:[{day:0,label:"جرعة تنشيطية: سلفات نشادر شيكارة/فدان عند الزراعة (أراضٍ جديدة)",perFeddan:50,unit:"كجم سلفات نشادر"},{day:20,label:"قبل رية المحاياة: الدفعة الأولى من الآزوت (~130 كجم يوريا/فدان في القديمة)",perFeddan:130,unit:"كجم يوريا"},{day:40,label:"قبل الرية الثانية: الدفعة الثانية من الآزوت (~130 كجم يوريا/فدان). لا آزوت بعد التزهير",perFeddan:130,unit:"كجم يوريا"}],
- diseases:[{n:"دودة الحشد الخريفية (الأخطر)",s:"يرقات تأكل الأوراق (شبابيك/نوافذ)، ثم ثقوب وتلف القلوب والكيزان وبراز كثير",t:"فحص مبكر + جمع يدوي + مبيدات اللجنة (بروتكتو/فانتي) — تُطابَق مع اللجنة."},{n:"الذبول المتأخر",s:"ذبول مفاجئ وموت النبات",t:"زراعة مبكرة + هجن مقاومة فقط."}]},
+ diseases:[{n:"دودة الحشد الخريفية (الأخطر)",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Spodoptera_frugiperda_in_stalk_of_Zea_mays.jpg/960px-Spodoptera_frugiperda_in_stalk_of_Zea_mays.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"يرقات تأكل الأوراق (شبابيك/نوافذ)، ثم ثقوب وتلف القلوب والكيزان وبراز كثير",t:"فحص مبكر + جمع يدوي + مبيدات اللجنة (بروتكتو/فانتي) — تُطابَق مع اللجنة."},{n:"الذبول المتأخر",photo:"",s:"ذبول مفاجئ وموت النبات",t:"زراعة مبكرة + هجن مقاومة فقط."}]},
 {id:"sunflower",name:"عباد الشمس",season:"صيفي (3 عروات)",planting:"مارس – يوليو؛ الوادي الجديد نيلي 15 أغسطس – أول سبتمبر",soil:"كل الأراضي عدا عالية الملوحة ورديئة الصرف",irrigation:"غمر / رش",gov:"المنوفية، الشرقية، الدقهلية، الوادي الجديد",varieties:["سخا 53","جيزة 102","سخا 52"],yield:"1200–1500 كجم/فدان (تقدير إرشادي)",priority:true,
  fert:"الإرشاد: أراضٍ قديمة: فوسفور 100 كجم سوبر فوسفات + آزوت 30 كجم N (100 كجم نترات نشادر) على دفعتين بعد الخف وبعد أسبوعين + بوتاسيوم 50 كجم سلفات بوتاسيوم. أراضٍ جديدة: آزوت 45 كجم N على 5 دفعات، ولا يوريا.",
  steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 100 كجم/فدان",perFeddan:100,unit:"كجم سوبر فوسفات"},{day:16,label:"بعد الخف: الدفعة الأولى آزوت (50 كجم نترات نشادر/فدان) + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:50,unit:"كجم نترات نشادر"},{day:30,label:"بعد أسبوعين: الدفعة الثانية آزوت (50 كجم نترات نشادر/فدان)",perFeddan:50,unit:"كجم نترات نشادر"}],
- diseases:[{n:"عفن الساق الفحمي",s:"تعفن الساق والقرص",t:"حسب لجنة المبيدات."},{n:"الحفار والدودة القارضة",s:"قرض البادرات في الأطوار الأولى",t:"حسب لجنة المبيدات."}]},
+ diseases:[{n:"عفن الساق الفحمي",photo:"https://agronom.info/resizer/w600-h315/uploads/entities/100012379/e4e9297918d8ba21eda00aeac0cf780f68024036.png?zc=1&f=jpg",s:"تعفن الساق والقرص",t:"حسب لجنة المبيدات."},{n:"الحفار والدودة القارضة",photo:"",s:"قرض البادرات في الأطوار الأولى",t:"حسب لجنة المبيدات."}]},
 {id:"peanut",name:"الفول السوداني",season:"صيفي (نحو 4 أشهر)",planting:"منتصف أبريل – آخر مايو",soil:"صفراء وطميية ورملية؛ ⚠️ لا يصلح إطلاقًا في الطينية الثقيلة — في المنوفية ينجح فقط في الأراضي الخفيفة/الرملية",irrigation:"ري معتدل منتظم؛ التعطيش يزيد العفن الفحمي",gov:"الشرقية، البحيرة، الإسماعيلية، المنوفية (أراضيها الخفيفة)، الوادي الجديد",varieties:["جيزة 6","إسماعيلية 2"],yield:"20 أردب/فدان، قد تزيد عن 25 أردبًا",priority:true,
  fert:"مرجع إرشادي ثانوي (يُراجَع مع نشرة 2023): فوسفور 200 كجم سوبر فوسفات + بوتاسيوم 50 كجم سلفات بوتاسيوم + آزوت 30 وحدة N على دفعتين (عند الزراعة وبعد 30 يومًا) + جبس زراعي 0.5 طن/فدان عند بداية التزهير (35–40 يومًا).",
  steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 200 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان + الدفعة الأولى آزوت",perFeddan:200,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد 30 يومًا: الدفعة الثانية آزوت",perFeddan:15,unit:"وحدة آزوت"},{day:38,label:"بداية التزهير: جبس زراعي 0.5 طن/فدان أسفل النباتات",perFeddan:500,unit:"كجم جبس زراعي"}],
- diseases:[{n:"أعفان الجذور وموت البادرات",s:"تقرحات بنية على الجذور وذبول واصفرار",t:"تطهير التقاوي + أصناف مقاومة + دورة زراعية."},{n:"العفن الأبيض (اللفحة الجنوبية)",s:"نمو أبيض قطني قرب سطح التربة وذبول",t:"صرف جيد + دورة زراعية + حسب اللجنة."},{n:"العفن الفحمي",s:"تلون أسود سخامي على الساق",t:"انتظام الري (لا تعطيش)."}]},
+ diseases:[{n:"أعفان الجذور وموت البادرات",photo:"",s:"تقرحات بنية على الجذور وذبول واصفرار",t:"تطهير التقاوي + أصناف مقاومة + دورة زراعية."},{n:"العفن الأبيض (اللفحة الجنوبية)",photo:"https://upload.wikimedia.org/wikipedia/commons/3/39/White-mycelial-growth-of-Sclerotium-rolfsii-on-crown-of-peanut-plant-with-sclerotia-forming-on-infected-tissue.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"نمو أبيض قطني قرب سطح التربة وذبول",t:"صرف جيد + دورة زراعية + حسب اللجنة."},{n:"العفن الفحمي",s:"تلون أسود سخامي على الساق",t:"انتظام الري (لا تعطيش)."}]},
 /* --- باقي المحاصيل: بيانات أساسية من الجدول الشامل + برامج مختصرة من البحث --- */
-{id:"rice",name:"الأرز",season:"صيفي",planting:"مايو – يونيو؛ نيلي يوليو – أوائل أغسطس",soil:"طينية ثقيلة",irrigation:"غمر دائم 5–7 سم",gov:"كفر الشيخ، الدقهلية، الشرقية، البحيرة",varieties:["جيزة 177","جيزة 178","جيزة 179","سخا 101"],yield:"4–5 طن/فدان حسب الصنف",fert:"⚠️ تعارض موثق: نشرة مايو 2025: 3 شكاير يوريا/فدان + شيكارة بوتاسيوم 48%؛ ودليل قديم: آزوت 40–50 كجم/فدان على دفعتين. يُعتمد رقم 2025 الأحدث ويُحسم مع الإرشاد.",steps:[{day:14,label:"بعد أسبوعين من الشتل: الدفعة الأولى يوريا (حسب نشرة 2025)",perFeddan:75,unit:"كجم يوريا"},{day:45,label:"بعد 45 يومًا من الشتل: نصف شيكارة بوتاسيوم + باقي اليوريا",perFeddan:75,unit:"كجم يوريا"}],diseases:[{n:"لفحة الأرز (الأخطر)",s:"بقع مغزلية رمادية الوسط بنية الحواف + خناق رقبة السنبلة",t:"أصناف مقاومة + مبيد (ترايسيكلوزول/بيم) حسب اللجنة."},{n:"التبقع البني",s:"بقع بنية مستديرة مركزها فاتح على الأوراق السفلى",t:"تحسين التغذية (بوتاسيوم) + مبيد حسب اللجنة."}]},
-{id:"cotton",name:"القطن",season:"صيفي",planting:"مارس (حرارة تربة 15°م 10 أيام متتالية)",soil:"خصبة عميقة جيدة الصرف",irrigation:"غمر / تنقيط ورش (جديدة)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["سوبر جيزة 94","سوبر جيزة 97","جيزة 95","جيزة 98"],yield:"حسب الصنف والخدمة",fert:"نشرة القطن: آزوت 62 كجم N على دفعتين أو 3 + فوسفور 150 كجم سوبر فوسفات + بوتاسيوم 50 كجم سلفات بوتاسيوم. الرملية: كميات أكبر ولا يوريا — لم يُوجد رقم موثوق محدد.",steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:25,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:100,unit:"كجم سلفات نشادر"},{day:50,label:"قبل الرية التالية: الدفعة الثانية آزوت (تنتهي قبل التزهير)",perFeddan:100,unit:"كجم سلفات نشادر"}],diseases:[{n:"ديدان اللوز",s:"ثقوب في اللوز وتعفنه",t:"مصائد فرمونية + ترايكوجراما + مبيدات اللجنة."},{n:"دودة ورق القطن",s:"يرقات تأكل الأوراق",t:"مكافحة متكاملة + مبيدات اللجنة."}]},
-{id:"sugarbeet",name:"بنجر السكر",season:"شتوي",planting:"3 عروات: منتصف أغسطس – نهاية نوفمبر",soil:"طميية أفضل؛ طينية بإحكام ري؛ رملية بتوافر الماء",irrigation:"غمر على الحامي (7–8 ريات) / رش وتنقيط (15–20 رية)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["جلوريا","تورو","توب"],yield:"حسب الصنف والخدمة",fert:"نشرة 897/2004: آزوت 60–80 كجم N على دفعتين + فوسفور 100–200 كجم سوبر فوسفات + بوتاسيوم 50 كجم. ⚠️ تعارض: ملخصات أخرى تذكر 80–120 كجم N — اعتماد أرقام النشرة 897.",steps:[{day:0,label:"أثناء التجهيز: سوبر فوسفات 100–200 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:40,unit:"كجم N"},{day:55,label:"في الرية التالية: الدفعة الثانية آزوت. لا آزوت بعد عمر 90 يومًا",perFeddan:40,unit:"كجم N"}],diseases:[{n:"التبقع السركسبوري",s:"بقع مستديرة حافة بنية محمرة ومركز رمادي",t:"حسب لجنة المبيدات."},{n:"البياض الدقيقي",s:"طبقة بيضاء كالدقيق على الورقة",t:"حسب لجنة المبيدات."}]},
-{id:"faba",name:"الفول البلدي",season:"شتوي",planting:"قبلي أول أكتوبر؛ بحري أول نوفمبر",soil:"معظم الأراضي عدا الملحية والقلوية وسيئة الصرف",irrigation:"غمر معتدل",gov:"كل الجمهورية؛ النوبارية، الشرقية، المنوفية",varieties:["سخا 1","جيزة 716","نوبارية 1"],yield:"حسب الصنف والخدمة",fert:"آزوت جرعة منشطة فقط حتى 15 كجم N في الطينية و20 في الرملية + فوسفور 100–150 كجم سوبر فوسفات + بوتاسيوم 50 كجم للأراضي الفقيرة بعد 35 يومًا.",steps:[{day:0,label:"عند الزراعة: جرعة آزوت منشطة + سوبر فوسفات 100–150 كجم/فدان",perFeddan:125,unit:"كجم سوبر فوسفات"},{day:35,label:"بعد 35 يومًا: سلفات بوتاسيوم 50 كجم/فدان (للأراضي الفقيرة فيه)",perFeddan:50,unit:"كجم سلفات بوتاسيوم"}],diseases:[{n:"الهالوك (طفيل — الأخطر)",s:"شماريخ فوق التربة واصفرار وتساقط أزهار، فقد قد يصل 90–100%",t:"تأخير الزراعة 7–10 أيام في الموبوءة + حسب اللجنة."},{n:"التبقع البني",s:"بقع حمراء بنية ذات مركز رمادي على الأوراق السفلى",t:"حسب لجنة المبيدات."}]},
+{id:"rice",name:"الأرز",season:"صيفي",planting:"مايو – يونيو؛ نيلي يوليو – أوائل أغسطس",soil:"طينية ثقيلة",irrigation:"غمر دائم 5–7 سم",gov:"كفر الشيخ، الدقهلية، الشرقية، البحيرة",varieties:["جيزة 177","جيزة 178","جيزة 179","سخا 101"],yield:"4–5 طن/فدان حسب الصنف",fert:"⚠️ تعارض موثق: نشرة مايو 2025: 3 شكاير يوريا/فدان + شيكارة بوتاسيوم 48%؛ ودليل قديم: آزوت 40–50 كجم/فدان على دفعتين. يُعتمد رقم 2025 الأحدث ويُحسم مع الإرشاد.",steps:[{day:14,label:"بعد أسبوعين من الشتل: الدفعة الأولى يوريا (حسب نشرة 2025)",perFeddan:75,unit:"كجم يوريا"},{day:45,label:"بعد 45 يومًا من الشتل: نصف شيكارة بوتاسيوم + باقي اليوريا",perFeddan:75,unit:"كجم يوريا"}],diseases:[{n:"لفحة الأرز (الأخطر)",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Rice_blast_symptoms.jpg/960px-Rice_blast_symptoms.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع مغزلية رمادية الوسط بنية الحواف + خناق رقبة السنبلة",t:"أصناف مقاومة + مبيد (ترايسيكلوزول/بيم) حسب اللجنة."},{n:"التبقع البني",photo:"",s:"بقع بنية مستديرة مركزها فاتح على الأوراق السفلى",t:"تحسين التغذية (بوتاسيوم) + مبيد حسب اللجنة."}]},
+{id:"cotton",name:"القطن",season:"صيفي",planting:"مارس (حرارة تربة 15°م 10 أيام متتالية)",soil:"خصبة عميقة جيدة الصرف",irrigation:"غمر / تنقيط ورش (جديدة)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["سوبر جيزة 94","سوبر جيزة 97","جيزة 95","جيزة 98"],yield:"حسب الصنف والخدمة",fert:"نشرة القطن: آزوت 62 كجم N على دفعتين أو 3 + فوسفور 150 كجم سوبر فوسفات + بوتاسيوم 50 كجم سلفات بوتاسيوم. الرملية: كميات أكبر ولا يوريا — لم يُوجد رقم موثوق محدد.",steps:[{day:0,label:"أثناء الخدمة: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:25,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:100,unit:"كجم سلفات نشادر"},{day:50,label:"قبل الرية التالية: الدفعة الثانية آزوت (تنتهي قبل التزهير)",perFeddan:100,unit:"كجم سلفات نشادر"}],diseases:[{n:"ديدان اللوز",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/3/36/CSIRO_ScienceImage_7410_A_larva_of_Helicoverpa_armigera_the_worlds_worst_insect_pest.jpg/960px-CSIRO_ScienceImage_7410_A_larva_of_Helicoverpa_armigera_the_worlds_worst_insect_pest.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"ثقوب في اللوز وتعفنه",t:"مصائد فرمونية + ترايكوجراما + مبيدات اللجنة."},{n:"دودة ورق القطن",photo:"https://upload.wikimedia.org/wikipedia/commons/5/57/Larva_spodoptera.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"يرقات تأكل الأوراق",t:"مكافحة متكاملة + مبيدات اللجنة."}]},
+{id:"sugarbeet",name:"بنجر السكر",season:"شتوي",planting:"3 عروات: منتصف أغسطس – نهاية نوفمبر",soil:"طميية أفضل؛ طينية بإحكام ري؛ رملية بتوافر الماء",irrigation:"غمر على الحامي (7–8 ريات) / رش وتنقيط (15–20 رية)",gov:"كفر الشيخ، الشرقية، الدقهلية، البحيرة، المنوفية",varieties:["جلوريا","تورو","توب"],yield:"حسب الصنف والخدمة",fert:"نشرة 897/2004: آزوت 60–80 كجم N على دفعتين + فوسفور 100–200 كجم سوبر فوسفات + بوتاسيوم 50 كجم. ⚠️ تعارض: ملخصات أخرى تذكر 80–120 كجم N — اعتماد أرقام النشرة 897.",steps:[{day:0,label:"أثناء التجهيز: سوبر فوسفات 100–200 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:30,label:"بعد الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:40,unit:"كجم N"},{day:55,label:"في الرية التالية: الدفعة الثانية آزوت. لا آزوت بعد عمر 90 يومًا",perFeddan:40,unit:"كجم N"}],diseases:[{n:"التبقع السركسبوري",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Cercospora_beticola_leaf_spot_on_sugar_beet.jpg/960px-Cercospora_beticola_leaf_spot_on_sugar_beet.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع مستديرة حافة بنية محمرة ومركز رمادي",t:"حسب لجنة المبيدات."},{n:"البياض الدقيقي",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Erysiphe_betae_226612695.jpg/960px-Erysiphe_betae_226612695.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"طبقة بيضاء كالدقيق على الورقة",t:"حسب لجنة المبيدات."}]},
+{id:"faba",name:"الفول البلدي",season:"شتوي",planting:"قبلي أول أكتوبر؛ بحري أول نوفمبر",soil:"معظم الأراضي عدا الملحية والقلوية وسيئة الصرف",irrigation:"غمر معتدل",gov:"كل الجمهورية؛ النوبارية، الشرقية، المنوفية",varieties:["سخا 1","جيزة 716","نوبارية 1"],yield:"حسب الصنف والخدمة",fert:"آزوت جرعة منشطة فقط حتى 15 كجم N في الطينية و20 في الرملية + فوسفور 100–150 كجم سوبر فوسفات + بوتاسيوم 50 كجم للأراضي الفقيرة بعد 35 يومًا.",steps:[{day:0,label:"عند الزراعة: جرعة آزوت منشطة + سوبر فوسفات 100–150 كجم/فدان",perFeddan:125,unit:"كجم سوبر فوسفات"},{day:35,label:"بعد 35 يومًا: سلفات بوتاسيوم 50 كجم/فدان (للأراضي الفقيرة فيه)",perFeddan:50,unit:"كجم سلفات بوتاسيوم"}],diseases:[{n:"الهالوك (طفيل — الأخطر)",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Orobanche_crenata_1.jpg/960px-Orobanche_crenata_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"شماريخ فوق التربة واصفرار وتساقط أزهار، فقد قد يصل 90–100%",t:"تأخير الزراعة 7–10 أيام في الموبوءة + حسب اللجنة."},{n:"التبقع البني",photo:"https://upload.wikimedia.org/wikipedia/commons/a/a8/Tuinboon_Chocoladevlekkenziekte.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"بقع حمراء بنية ذات مركز رمادي على الأوراق السفلى",t:"حسب لجنة المبيدات."}]},
 {id:"clover",name:"البرسيم المصري",season:"شتوي",planting:"منتصف سبتمبر – آخر نوفمبر (الأنسب أول أكتوبر)",soil:"كل الأراضي المحتفظة بالرطوبة عدا الغدقة وعالية الملوحة",irrigation:"غمر في أحواض",gov:"كل الجمهورية",varieties:["هلالي","جميزة 1","سرو 1","جيزة 6"],yield:"علف — حسب عدد الحشات",fert:"نشرة 904/2004: فوسفور 150–200 كجم سوبر فوسفات + بوتاسيوم 50–75 كجم + آزوت تنشيطي 10–15 وحدة فقط. ⚠️ تعارض: معمل طنطا يذكر فوسفور 300–400 كجم — لم يُرجَّح رقم.",steps:[{day:0,label:"قبل الحرث: سوبر فوسفات 150–200 كجم/فدان + سلفات بوتاسيوم 50–75 كجم/فدان",perFeddan:175,unit:"كجم سوبر فوسفات"},{day:20,label:"قبل رية المحاياة: آزوت تنشيطي 10–15 وحدة فقط",perFeddan:12,unit:"وحدة آزوت"}],diseases:[{n:"أمراض البرسيم المصري",s:"لا يوجد قسم أمراض موثق في المصادر المفتوحة — يحتاج نشرة 904 الكاملة",t:"راجع معهد بحوث أمراض النباتات."}]},
-{id:"barley",name:"الشعير",season:"شتوي",planting:"بحري 20 نوفمبر – 15 ديسمبر؛ قبلي 10 نوفمبر – أول ديسمبر",soil:"كل الأراضي حتى الملحية (حتى 6000 جزء/مليون)",irrigation:"2–3 ريات / رش / مطري",gov:"مطروح، الساحل الشمالي، سيناء، شرق العوينات",varieties:["جيزة 123","جيزة 124","جيزة 125","جيزة 133"],yield:"حسب الصنف والري",fert:"نشرة 921/2004: فوسفور 100 كجم سوبر فوسفات + آزوت 45 كجم N على 3 دفعات (20/40/باقي) + بوتاسيوم 24 كجم. الرملية: آزوت 65 وحدة ولا يوريا.",steps:[{day:0,label:"قبل الزراعة: سوبر فوسفات 100 كجم/فدان + 20% آزوت",perFeddan:20,unit:"كجم يوريا"},{day:22,label:"مع رية المحاياة: 40% آزوت",perFeddan:40,unit:"كجم يوريا"},{day:47,label:"مع الرية الثانية: باقي الآزوت. لا آزوت بعد طرد السنابل",perFeddan:40,unit:"كجم يوريا"}],diseases:[{n:"صدأ الأوراق",s:"بثرات بنية فاتحة مستديرة تتحول للأسود",t:"أصناف مقاومة."},{n:"التبقع الشبكي",s:"بقع مغزلية حولها هالة صفراء وبتقسيم شبكي",t:"أصناف مقاومة."}]},
-{id:"potato",name:"البطاطس",season:"شتوي/صيفي/نيلي",planting:"سبتمبر – فبراير (3 عروات)",soil:"رملية وصفراء جيدة الصرف (لا تغريق)",irrigation:"تنقيط ومحوري (جديدة) / غمر (قديمة)",gov:"البحيرة، المنوفية، الدقهلية، الجيزة، المنيا",varieties:["سبونتا","ديزيريه","نيكولا","دايمونت","موناليزا"],yield:"حسب العروة والصنف",fert:"⚠️ تعارض كبير موثق: برنامج كلاسيكي 60–80 كجم N، وبرنامج حديث 180–200 وحدة آزوت، وFAO نحو 126 كجم N/فدان. لا تُدمج — يُعتمد برنامج واحد بعد تحليل التربة ومراجعة نشرة البطاطس الرسمية.",steps:[{day:0,label:"قبل الزراعة: سماد بلدي + سوبر فوسفات (حسب البرنامج المعتمد بعد تحليل التربة)",perFeddan:0,unit:"—"},{day:35,label:"بعد 30–40 يومًا: دفعة آزوت حسب البرنامج المعتمد",perFeddan:0,unit:"—"}],diseases:[{n:"الندوة المتأخرة",s:"بقع مائية على قمم وحواف الأوراق تتحول لبني/أسود مع زغب رمادي",t:"حسب لجنة المبيدات."},{n:"الندوة المبكرة",s:"بقع بنية دائرية بحلقات متداخلة تشبه الهدف",t:"حسب لجنة المبيدات."},{n:"دودة درنات البطاطس",s:"أنفاق داخل الدرنات",t:"الترديم الجيد."}]},
-{id:"tomato",name:"الطماطم",season:"شتوي وصيفي (عروات)",planting:"فبراير – مايو (صيفي) وعروات أخرى",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط",gov:"كل الجمهورية؛ المنوفية، القليوبية، الجيزة",varieties:["بيتو 86","كاسل روك","سوبر استرين بي","فلوراديد"],yield:"حسب العروة والهجين",fert:"دليل المنوفية (غمر): عند المحاياة 150 كجم سلفات نشادر + 50 بوتاسيوم؛ بعد شهر 200 نشادر + 100 بوتاسيوم؛ بعد 80–90 يومًا 150 نترات نشادر + 100 بوتاسيوم. تُزاد الكميات 50% في الرملية.",steps:[{day:25,label:"رية المحاياة: سلفات نشادر 150 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:150,unit:"كجم سلفات نشادر"},{day:55,label:"بعد شهر: سلفات نشادر 200 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:200,unit:"كجم سلفات نشادر"},{day:85,label:"بعد 80–90 يومًا: نترات نشادر 150 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:150,unit:"كجم نترات نشادر"}],diseases:[{n:"الندوة المبكرة",s:"بقع على الأوراق السفلى بحلقات دائرية تمتد للأعلى",t:"حسب لجنة المبيدات."},{n:"الندوة المتأخرة",s:"بقع كبيرة مائية مخضرة داكنة على الأوراق والثمار",t:"حسب لجنة المبيدات."},{n:"تجعد واصفرار الأوراق الفيروسي",s:"تجعد واصفرار وتقزم",t:"لا علاج للفيروس؛ مكافحة الذباب الأبيض وأصناف مقاومة."}]},
-{id:"onion",name:"البصل",season:"شتوي (وصيفي)",planting:"مشتل أول أكتوبر – نهاية نوفمبر (بحري)؛ شتلات أواخر نوفمبر",soil:"طميية وصفراء جيدة الصرف",irrigation:"غمر معتدل",gov:"سوهاج، الدقهلية، الغربية، المنوفية",varieties:["جيزة 6 محسن","جيزة 20","جيزة أحمر","جيزة أبيض"],yield:"حسب الصنف والخدمة",fert:"⚠️ لا يوجد برنامج NPK رسمي موحد موثوق في المصادر المفتوحة. برنامجان منقولان مختلفان (60–90 وحدة آزوت مقابل 120 وحدة في الجديدة) — لا يُعتمد رقم قبل نشرة رسمية حديثة.",steps:[{day:0,label:"عند التجهيز: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:21,label:"بعد 21 يومًا من الزراعة: الدفعة الأولى آزوت (راجع النشرة الرسمية)",perFeddan:0,unit:"—"}],diseases:[{n:"العفن الأبيض (الأخطر)",s:"اصفرار ثم ذبول ثم موت الأوراق من القمة للأسفل وعفن جذور",t:"دورة زراعية + عدم زراعة شتلات مصابة. حسب اللجنة."},{n:"البياض الزغبي",s:"بقع صفراء باهتة بنمو زغبي رمادي مشوب ببنفسجي",t:"حسب لجنة المبيدات."},{n:"اللفحة الأرجوانية",s:"بقع بيضاوية غائرة وسط أرجواني وحافة صفراء",t:"حسب لجنة المبيدات."}]},
+{id:"barley",name:"الشعير",season:"شتوي",planting:"بحري 20 نوفمبر – 15 ديسمبر؛ قبلي 10 نوفمبر – أول ديسمبر",soil:"كل الأراضي حتى الملحية (حتى 6000 جزء/مليون)",irrigation:"2–3 ريات / رش / مطري",gov:"مطروح، الساحل الشمالي، سيناء، شرق العوينات",varieties:["جيزة 123","جيزة 124","جيزة 125","جيزة 133"],yield:"حسب الصنف والري",fert:"نشرة 921/2004: فوسفور 100 كجم سوبر فوسفات + آزوت 45 كجم N على 3 دفعات (20/40/باقي) + بوتاسيوم 24 كجم. الرملية: آزوت 65 وحدة ولا يوريا.",steps:[{day:0,label:"قبل الزراعة: سوبر فوسفات 100 كجم/فدان + 20% آزوت",perFeddan:20,unit:"كجم يوريا"},{day:22,label:"مع رية المحاياة: 40% آزوت",perFeddan:40,unit:"كجم يوريا"},{day:47,label:"مع الرية الثانية: باقي الآزوت. لا آزوت بعد طرد السنابل",perFeddan:40,unit:"كجم يوريا"}],diseases:[{n:"صدأ الأوراق",photo:"https://upload.wikimedia.org/wikipedia/commons/d/d6/Puccinia_hordei_G.H._Otth_5410688.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",s:"بثرات بنية فاتحة مستديرة تتحول للأسود",t:"أصناف مقاومة."},{n:"التبقع الشبكي",s:"بقع مغزلية حولها هالة صفراء وبتقسيم شبكي",t:"أصناف مقاومة."}]},
+{id:"potato",name:"البطاطس",season:"شتوي/صيفي/نيلي",planting:"سبتمبر – فبراير (3 عروات)",soil:"رملية وصفراء جيدة الصرف (لا تغريق)",irrigation:"تنقيط ومحوري (جديدة) / غمر (قديمة)",gov:"البحيرة، المنوفية، الدقهلية، الجيزة، المنيا",varieties:["سبونتا","ديزيريه","نيكولا","دايمونت","موناليزا"],yield:"حسب العروة والصنف",fert:"⚠️ تعارض كبير موثق: برنامج كلاسيكي 60–80 كجم N، وبرنامج حديث 180–200 وحدة آزوت، وFAO نحو 126 كجم N/فدان. لا تُدمج — يُعتمد برنامج واحد بعد تحليل التربة ومراجعة نشرة البطاطس الرسمية.",steps:[{day:0,label:"قبل الزراعة: سماد بلدي + سوبر فوسفات (حسب البرنامج المعتمد بعد تحليل التربة)",perFeddan:0,unit:"—"},{day:35,label:"بعد 30–40 يومًا: دفعة آزوت حسب البرنامج المعتمد",perFeddan:0,unit:"—"}],diseases:[{n:"الندوة المتأخرة",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Phytophthora_infestans_on_potato_leaf.jpg/960px-Phytophthora_infestans_on_potato_leaf.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع مائية على قمم وحواف الأوراق تتحول لبني/أسود مع زغب رمادي",t:"حسب لجنة المبيدات."},{n:"الندوة المبكرة",photo:"",s:"بقع بنية دائرية بحلقات متداخلة تشبه الهدف",t:"حسب لجنة المبيدات."},{n:"دودة درنات البطاطس",photo:"",s:"أنفاق داخل الدرنات",t:"الترديم الجيد."}]},
+{id:"tomato",name:"الطماطم",season:"شتوي وصيفي (عروات)",planting:"فبراير – مايو (صيفي) وعروات أخرى",soil:"خصبة جيدة الصرف",irrigation:"غمر / تنقيط",gov:"كل الجمهورية؛ المنوفية، القليوبية، الجيزة",varieties:["بيتو 86","كاسل روك","سوبر استرين بي","فلوراديد"],yield:"حسب العروة والهجين",fert:"دليل المنوفية (غمر): عند المحاياة 150 كجم سلفات نشادر + 50 بوتاسيوم؛ بعد شهر 200 نشادر + 100 بوتاسيوم؛ بعد 80–90 يومًا 150 نترات نشادر + 100 بوتاسيوم. تُزاد الكميات 50% في الرملية.",steps:[{day:25,label:"رية المحاياة: سلفات نشادر 150 كجم/فدان + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:150,unit:"كجم سلفات نشادر"},{day:55,label:"بعد شهر: سلفات نشادر 200 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:200,unit:"كجم سلفات نشادر"},{day:85,label:"بعد 80–90 يومًا: نترات نشادر 150 كجم/فدان + سلفات بوتاسيوم 100 كجم/فدان",perFeddan:150,unit:"كجم نترات نشادر"}],diseases:[{n:"الندوة المبكرة",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/Early_blight_on_tomato_leaves_%287871930010%29.jpg/960px-Early_blight_on_tomato_leaves_%287871930010%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع على الأوراق السفلى بحلقات دائرية تمتد للأعلى",t:"حسب لجنة المبيدات."},{n:"الندوة المتأخرة",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Late_blight_of_tomato_caused_by_Phytophthora_infestans_%285815188381%29.jpg/960px-Late_blight_of_tomato_caused_by_Phytophthora_infestans_%285815188381%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع كبيرة مائية مخضرة داكنة على الأوراق والثمار",t:"حسب لجنة المبيدات."},{n:"تجعد واصفرار الأوراق الفيروسي",photo:"",s:"تجعد واصفرار وتقزم",t:"لا علاج للفيروس؛ مكافحة الذباب الأبيض وأصناف مقاومة."}]},
+{id:"onion",name:"البصل",season:"شتوي (وصيفي)",planting:"مشتل أول أكتوبر – نهاية نوفمبر (بحري)؛ شتلات أواخر نوفمبر",soil:"طميية وصفراء جيدة الصرف",irrigation:"غمر معتدل",gov:"سوهاج، الدقهلية، الغربية، المنوفية",varieties:["جيزة 6 محسن","جيزة 20","جيزة أحمر","جيزة أبيض"],yield:"حسب الصنف والخدمة",fert:"⚠️ لا يوجد برنامج NPK رسمي موحد موثوق في المصادر المفتوحة. برنامجان منقولان مختلفان (60–90 وحدة آزوت مقابل 120 وحدة في الجديدة) — لا يُعتمد رقم قبل نشرة رسمية حديثة.",steps:[{day:0,label:"عند التجهيز: سوبر فوسفات 150 كجم/فدان",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:21,label:"بعد 21 يومًا من الزراعة: الدفعة الأولى آزوت (راجع النشرة الرسمية)",perFeddan:0,unit:"—"}],diseases:[{n:"العفن الأبيض (الأخطر)",photo:"",s:"اصفرار ثم ذبول ثم موت الأوراق من القمة للأسفل وعفن جذور",t:"دورة زراعية + عدم زراعة شتلات مصابة. حسب اللجنة."},{n:"البياض الزغبي",photo:"https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2b/Falscher_Mehltau_1_%28Peronospora_destructor%29-DLR-NW-jk.jpg/960px-Falscher_Mehltau_1_%28Peronospora_destructor%29-DLR-NW-jk.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",s:"بقع صفراء باهتة بنمو زغبي رمادي مشوب ببنفسجي",t:"حسب لجنة المبيدات."},{n:"اللفحة الأرجوانية",photo:"",s:"بقع بيضاوية غائرة وسط أرجواني وحافة صفراء",t:"حسب لجنة المبيدات."}]},
 {id:"garlic",name:"الثوم",season:"شتوي",planting:"سبتمبر – أكتوبر",soil:"طميية وصفراء جيدة الصرف",irrigation:"غمر معتدل؛ تنقيط في الجديدة",gov:"المنيا، بني سويف، الشرقية، الدقهلية",varieties:["البلدي المصري","سدس 40","إيجاسيد 1"],yield:"حسب الصنف والخدمة",fert:"نشرة إرشادية منقولة: إجمالي 120 وحدة آزوت + 75 فوسفور + 72 بوتاسيوم على 3 دفعات بعد الإنبات وبعد شهر وبعد شهرين + سماد بلدي 20 م³ + كبريت زراعي 300 كجم.",steps:[{day:10,label:"بعد تمام الإنبات: 50 آزوت + 20 فوسفور + 12 بوتاسيوم",perFeddan:50,unit:"وحدة آزوت"},{day:40,label:"بعد شهر: 30 آزوت + 20 فوسفور + 24 بوتاسيوم",perFeddan:30,unit:"وحدة آزوت"},{day:70,label:"بعد شهرين من الثانية: 25 آزوت + 10 فوسفور + 36 بوتاسيوم",perFeddan:25,unit:"وحدة آزوت"}],diseases:[{n:"العفن الأبيض",s:"اصفرار وذبول وعفن جذور",t:"حسب لجنة المبيدات."},{n:"البياض الزغبي",s:"بقع صفراء بنمو زغبي",t:"حسب لجنة المبيدات."}]},
 {id:"soybean",name:"فول الصويا",season:"صيفي",planting:"مايو (النصف الثاني للتقاوي)",soil:"خصبة جيدة الصرف؛ يجود في الجيرية والرملية",irrigation:"غمر / رش",gov:"الشرقية، الدقهلية، المنوفية، المنيا",varieties:["جيزة 35","جيزة 82","جيزة 83","جيزة 111"],yield:"1.2–1.7 طن/فدان حسب الصنف",fert:"نشرة الإرشاد: فوسفور 150 كجم سوبر فوسفات + آزوت تنشيطي 15 وحدة (20 في الجديدة)؛ إن وُجد 8 عقد بكتيرية حمراء أو أكثر في عمر 25–30 يومًا فلا آزوت بعدها. بوتاسيوم 50 كجم.",steps:[{day:0,label:"عند الزراعة: سوبر فوسفات 150 كجم/فدان + آزوت تنشيطي 15 وحدة",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:28,label:"عمر 25–30 يومًا: افحص العقد البكتيرية؛ إن قلّت عن 8 عقد حمراء أضف 40 وحدة آزوت (قديمة)",perFeddan:40,unit:"وحدة آزوت"}],diseases:[{n:"دودة ورق القطن",s:"يرقات تأكل الأوراق",t:"حسب لجنة المبيدات."},{n:"تبقع سركسبوري",s:"تبقعات على الأوراق",t:"حسب لجنة المبيدات."}]},
 {id:"sesame",name:"السمسم",season:"صيفي",planting:"منتصف أبريل – نهاية مايو",soil:"خفيفة جيدة الصرف",irrigation:"غمر معتدل على الحامي (لا ري ظهيرة ولا مياه راكدة)",gov:"قنا، سوهاج، أسيوط، الشرقية",varieties:["جيزة 32","شندويل 3","توشكي 1","سوهاج 1"],yield:"4.5–5 أردب/فدان في المتوسط",fert:"نشرة 2023: فوسفور 200 كجم سوبر فوسفات (فقيرة) / 150 (بعد نجيليات) / 100 (بعد بقوليات) + بوتاسيوم 50 كجم + آزوت 30 وحدة على 3 دفعات في الخصبة.",steps:[{day:0,label:"قبل التخطيط: سوبر فوسفات 100–200 كجم/فدان حسب المحصول السابق",perFeddan:150,unit:"كجم سوبر فوسفات"},{day:20,label:"عقب الخف: الدفعة الأولى آزوت + سلفات بوتاسيوم 50 كجم/فدان",perFeddan:10,unit:"وحدة آزوت"},{day:35,label:"بعد أسبوعين: الدفعة الثانية آزوت",perFeddan:10,unit:"وحدة آزوت"}],diseases:[{n:"الذبول الفيوزاريومي",s:"اصفرار يتقدم لأسفل وتدلٍّ وجفاف وخطوط سوداء على الساق",t:"أصناف مقاومة (شندويل 3) + دورة ثلاثية."},{n:"موت البادرات",s:"موت البادرات وأعفان الجذور",t:"تقاوي معاملة بمطهر فطري."}]},
@@ -385,8 +429,17 @@ const SYMPTOMS = ["اصفرار الأوراق","بقع على الورقة","ب
 /* ===== التخزين والحسابات ===== */
 function emptyDB(){return {users:[],plantings:[],logs:[],sales:[],diagnoses:[],questions:[],supervision:{open:false},cropEdits:{},labels:{},created:new Date().toISOString()};}
 function loadDB(){try{const d=JSON.parse(localStorage.getItem(DB_KEY));if(!d||!d.users)return emptyDB();if(!d.labels)d.labels={};if(!d.cropEdits)d.cropEdits={};if(!d.sales)d.sales=[];if(!d.questions)d.questions=[];if(!d.supervision||typeof d.supervision.open!=="boolean")d.supervision={open:false};d.users.forEach(normUser);return d;}catch(e){return emptyDB();}}
-function saveLocal(db){localStorage.setItem(DB_KEY,JSON.stringify(db));}
-function saveDB(db){saveLocal(db);schedulePush();}
+function saveLocal(db){
+  try{localStorage.setItem(DB_KEY,JSON.stringify(db));return true;}
+  catch(e){
+    try{
+      const slim=JSON.parse(JSON.stringify(db));
+      (slim.diagnoses||[]).forEach(function(d){d.photos=[];});
+      localStorage.setItem(DB_KEY,JSON.stringify(slim));return "slim";
+    }catch(e2){return false;}
+  }
+}
+function saveDB(db){const r=saveLocal(db);schedulePush();return r;}
 /* ================= المزامنة مع Supabase (تلقائية بين الموبايلات) =================
    كيف تعمل:
    - localStorage يبقى المخزن المحلي (أوفلاين أولًا) — التطبيق يعمل بدونه نت كما قبل.
@@ -800,10 +853,14 @@ function answerQuestion(id){
   q.answer=a;q.answeredBy=u.username;saveDB(DB);renderSupervision();alert("تم نشر الإجابة.");
 }
 function logout(){sessionStorage.removeItem(SESSION_KEY);location.reload();}
+/* شاشة الترحيب: زرار الدخول ينزل لاستمارة الدخول، وزرار إنشاء حساب يفتح التسجيل */
+function goLogin(){document.getElementById("authCard").scrollIntoView({behavior:"smooth"});setTimeout(()=>{const e=document.getElementById("loginUser");if(e)e.focus();},400);}
+function goRegister(){document.getElementById("registerBox").classList.remove("hidden");document.getElementById("authCard").scrollIntoView({behavior:"smooth"});setTimeout(()=>{const e=document.getElementById("regUser");if(e)e.focus();},400);}
 function enterApp(){
   const u=currentUser();if(!u)return;
   if(u.status!=="approved"){sessionStorage.removeItem(SESSION_KEY);document.getElementById("authCard").classList.remove("hidden");document.getElementById("app").classList.add("hidden");alert(u.status==="pending"?"حسابك لسه في انتظار موافقة الأدمن.":"تم رفض طلب حسابك. تواصل مع الأدمن.");return;}
   applyLabels();
+  document.getElementById("welcome").classList.add("hidden");
   document.getElementById("authCard").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   document.getElementById("topbar").style.display="flex";
@@ -890,8 +947,22 @@ function planSteps(p){
     const total=(af!=null&&s.perFeddan)?(s.perFeddan*af):null;
     const date=p.date?addDays(p.date,s.day):null;
     const overdue=date&&new Date(date)<new Date()&&!p.closed;
-    return {label:s.label,date,total,unit:s.unit,overdue};
+    return {label:s.label,date,total,unit:s.unit,overdue,perFeddan:s.perFeddan};
   });
+}
+/* جدول مراحل التسميد: رقم المرحلة + التوقيت + الخطوة + جرعة الفدان
+   (+ جرعة القيراط في تبويب الخطط، أو الكمية لمساحتك في صفحة الزرعة) */
+function fertStepsTableHtml(c,af){
+  const steps=c.steps||[];
+  if(!steps.length)return "";
+  let h="<table><tr><th>المرحلة</th><th>التوقيت</th><th>الخطوة</th><th>الجرعة للفدان</th><th>"+(af?"الكمية لمساحتك":"الجرعة للقيراط")+"</th></tr>";
+  steps.forEach((s,i)=>{
+    const when=s.day===0?"عند الزراعة":"بعد "+s.day+" يوم";
+    const dose=(s.perFeddan&&s.unit&&s.unit!=="—")?fmt(s.perFeddan)+" "+esc(s.unit):"حسب البرنامج";
+    const extra=(s.perFeddan&&s.unit&&s.unit!=="—")?(af?fmt(s.perFeddan*af)+" "+esc(s.unit):fmt(s.perFeddan/24)+" "+esc(s.unit)):"—";
+    h+="<tr><td>"+(i+1)+"</td><td>"+when+"</td><td>"+esc(withCommonNames(s.label))+"</td><td>"+dose+"</td><td>"+extra+"</td></tr>";
+  });
+  return h+"</table>";
 }
 function renderPlantings(){
   const _u=currentUser();
@@ -938,11 +1009,14 @@ function deletePlanting(id){
 }
 function plantingDetail(p,c,steps,cost){
   const af=areaFeddan(p);
-  let h="<h3>خطة التسميد (إرشادية بالفدان)</h3><div class='note'>"+esc(COMMON_GLOSSARY)+"</div><div class='warnbox'>"+esc(withCommonNames(DB.cropEdits[c.id]?DB.cropEdits[c.id].fert:c.fert))+"</div>";
+  const fertEdit=DB.cropEdits[c.id];
+  let h="<h3>خطة التسميد (إرشادية بالفدان)</h3><div class='note'>"+esc(COMMON_GLOSSARY)+"</div>"
+  +(fertEdit?"<div class='warnbox'>⚠️ تم تعديل برنامج التسميد يدويًا بواسطة الأدمن — التفاصيل في الأسفل.</div>":"")
+  +"<details><summary>تفاصيل البرنامج كاملة (نص)</summary><div class='warnbox'>"+esc(withCommonNames(fertEdit?fertEdit.fert:c.fert))+"</div></details>";
   if(p.customSearchUrl)h+="<div class='note'>🔍 نتيجة البحث على النت عن هذا المحصول: <a href='"+esc(p.customSearchUrl)+"' target='_blank'>فتح البحث</a></div>";
   if(p.customCropDesc)h+="<div>الشرح الذي كتبته: "+esc(p.customCropDesc)+"</div>";
-  h+="<table><tr><th>التاريخ</th><th>الخطوة</th><th>الكمية الكلية لمساحتك</th><th>الحالة</th></tr>";
-  steps.forEach(s=>{h+="<tr><td>"+fmtDate(s.date)+"</td><td>"+esc(withCommonNames(s.label))+"</td><td>"+(s.total!=null?fmt(s.total)+" "+esc(s.unit):"بالفدان — حدّد المساحة لحساب الكمية")+"</td><td>"+(s.overdue?"<span class='badge red'>فات ميعاده</span>":"<span class='badge'>قادم</span>")+"</td></tr>";});
+  h+="<table><tr><th>التاريخ</th><th>الخطوة</th><th>الجرعة للفدان</th><th>الكمية الكلية لمساحتك</th><th>الحالة</th></tr>";
+  steps.forEach(s=>{h+="<tr><td>"+fmtDate(s.date)+"</td><td>"+esc(withCommonNames(s.label))+"</td><td>"+((s.perFeddan&&s.unit&&s.unit!=="—")?fmt(s.perFeddan)+" "+esc(s.unit):"حسب البرنامج")+"</td><td>"+(s.total!=null?fmt(s.total)+" "+esc(s.unit):"بالفدان — حدّد المساحة لحساب الكمية")+"</td><td>"+(s.overdue?"<span class='badge red'>فات ميعاده</span>":"<span class='badge'>قادم</span>")+"</td></tr>";});
   h+="</table><p style='font-size:16px'>الإنتاجية المتوقعة: "+esc(c.yield)+"</p>";
   h+="<h3>"+esc(L("dailyLogTitle"))+"</h3>";
   h+="<div class='row'><select id='lgType-"+p.id+"'><option>ري</option><option>تسميد</option><option>رش</option><option>حصاد</option><option>أخرى</option></select></div>"
@@ -1064,7 +1138,10 @@ function renderCrops(){
     +"ميعاد الزراعة: "+esc(c.planting)+"<br>التربة: "+esc(c.soil)+"<br>الري: "+esc(c.irrigation)+"<br>المحافظات: "+esc(c.gov)+"<br>"
     +"الأصناف: "+esc(c.varieties.join("، "))+"<br>الإنتاجية المتوقعة: "+esc(c.yield)
     +"<div class='note' style='margin:8px 0'>"+esc(COMMON_GLOSSARY)+"</div>"
-    +"<div class='warnbox'><b>برنامج التسميد الكيماوي (إرشادي بالفدان):</b><br>"+esc(withCommonNames(edit?edit.fert:c.fert))+(edit?"<br><small>آخر تعديل: "+esc(edit.source||"")+" — "+fmtDate(edit.date)+"</small>":"")+"</div>"
+    +"<h3>برنامج التسميد الكيماوي (إرشادي)</h3>"
+    +(edit?"<div class='warnbox'>⚠️ تم تعديل برنامج التسميد يدويًا بواسطة الأدمن — التفاصيل في الأسفل.</div>":"")
+    +fertStepsTableHtml(c,null)
+    +"<details><summary>تفاصيل البرنامج كاملة (نص)</summary><div class='warnbox'>"+esc(withCommonNames(edit?edit.fert:c.fert))+(edit?"<br><small>آخر تعديل: "+esc(edit.source||"")+" — "+fmtDate(edit.date)+"</small>":"")+"</div></details>"
     +"<b>الأمراض الشائعة:</b><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul></div>";
   }).join("")||"<p>لا توجد نتائج مطابقة لاختياراتك — جرّب توسّع المحافظة أو المحصول.</p>";
 }
@@ -1136,8 +1213,8 @@ function selectDgDisease(idx){
   const ctx=cropDiseasesFor(document.getElementById("dgCrop").value);
   const d=ctx.crop.diseases[idx];if(!d)return;
   dgSelectedDisease=d.n;
-  document.querySelectorAll("#dgDiseaseChips .chip").forEach((el,i)=>el.classList.toggle("on",i===idx));
-  document.getElementById("dgDiseaseDetail").innerHTML="<div class='card' style='margin:8px 0'><h3>"+esc(d.n)+"</h3><p><b>الأعراض:</b> "+esc(d.s)+"</p><p><b>الحل المقترح:</b> "+esc(d.t)+"</p></div>";
+  document.querySelectorAll("#dgDiseaseChips .dg-card").forEach((el,i)=>el.classList.toggle("on",i===idx));
+  document.getElementById("dgDiseaseDetail").innerHTML="<div class='card' style='margin:8px 0'>"+(d.photo?"<img src='"+esc(d.photo)+"' class='dg-photo' alt='"+esc(d.n)+"'>":"")+"<h3>"+esc(d.n)+"</h3><p><b>الأعراض:</b> "+esc(d.s)+"</p><p><b>الحل المقترح:</b> "+esc(d.t)+"</p></div>";
 }
 /* يعيد رسم أمراض المحصول وأعراضه وأصنافه عند تغيير المحصول */
 function renderDiagCrop(){
@@ -1146,7 +1223,7 @@ function renderDiagCrop(){
   document.getElementById("dgDiseaseDetail").innerHTML="";
   const noteEl=document.getElementById("dgDiseaseNote");
   if(ctx.note){noteEl.textContent=ctx.note;noteEl.classList.remove("hidden");}else{noteEl.textContent="";noteEl.classList.add("hidden");}
-  document.getElementById("dgDiseaseChips").innerHTML=ctx.crop.diseases.map((d,i)=>"<span class='chip' onclick='selectDgDisease("+i+")'>"+esc(d.n)+"</span>").join("")||"<span style='font-size:16px;color:#777'>لا توجد قائمة أمراض جاهزة — استخدم الأعراض أو الصور.</span>";
+  document.getElementById("dgDiseaseChips").innerHTML=ctx.crop.diseases.map((d,i)=>"<div class='dg-card' onclick='selectDgDisease("+i+")'>"+(d.photo?"<img src='"+esc(d.photo)+"' alt='"+esc(d.n)+"'>":"<div class='dg-nophoto'>📷</div>")+"<span>"+esc(d.n)+"</span></div>").join("")||"<span style='font-size:16px;color:#777'>لا توجد قائمة أمراض جاهزة — استخدم الأعراض أو الصور.</span>";
   const phrases=deriveSymptomPhrases(ctx.crop.diseases);
   const chips=(phrases.length?phrases:SYMPTOMS);
   document.getElementById("symptomChips").innerHTML=chips.map(s=>"<span class='chip' data-s='"+esc(s)+"' onclick='this.classList.toggle(\"on\")'>"+esc(s)+"</span>").join("");
@@ -1167,18 +1244,23 @@ function diagnose(){
   if(!best){const scored=scoreDiseases(cropId,text);best=scored[0];}
   const gov=resolveOther("dgGov","dgCustomGovText"),soil=resolveOther("dgSoil","dgCustomSoilText"),irr=resolveOther("dgIrr","dgCustomIrrText"),variety=resolveOther("dgVariety","dgCustomVarietyText");
   const u=currentUser();
-  const resultName=selected||(best&&best.score>0?best.d.n:(photos.length?"تشخيص بالصور فقط — ارفع الصورة على عدسة جوجل":"لا توجد مطابقة واضحة"));
+  const resultName=selected||(best&&best.score>0?best.d.n:(photos.length?"تشخيص بالصور فقط — قارن صورتك بمكتبة صور الأمراض":"لا توجد مطابقة واضحة"));
   DB.diagnoses.push({id:"d"+Date.now(),owner:u?u.username:"",cropId,text:text.trim(),result:resultName,photo:photos.length>0,photos:photos,gov:gov,soil:soil,irr:irr,variety:variety,date:new Date().toISOString()});
-  saveDB(DB);
+  const saveRes=saveDB(DB);
+  if(saveRes===false){
+    document.getElementById("diagResult").innerHTML="<div class='card warnbox'><b>⚠️ حصلت مشكلة في حفظ التشخيص على الجهاز.</b><br>غالبًا الصور كبيرة أو مساحة التخزين ممتلئة — جرّب صورًا أصغر أو صورة واحدة، أو امسح تشخيصات قديمة، وحاول تاني.</div>";
+    return;
+  }
   const ctxLine=[["المحافظة",gov],["التربة",soil],["الري",irr],["التقاوي",variety]].filter(x=>x[1]&&x[1]!=="لا أعلم").map(x=>"<b>"+x[0]+":</b> "+esc(x[1])).join(" | ");
   let h="<div class='card'>";
   if(ctx.note)h+="<div class='note'>"+esc(ctx.note)+"</div>";
   if(ctxLine)h+="<p>"+ctxLine+"</p>";
   if(best&&best.score>0){h+="<h3>الأقرب لتشخيصك: "+esc(best.d.n)+"</h3><p><b>الأعراض:</b> "+esc(best.d.s)+"</p><p><b>الحل المقترح:</b> "+esc(best.d.t)+"</p>";}
-  else if(photos.length){h+="<h3>تم حفظ التشخيص بالصور ("+photos.length+" "+(photos.length===1?"صورة":"صور")+")</h3><p>التطبيق مش بيحلّل الصورة أوتوماتيك — دوس على زر «ابحث بالصورة على النت (عدسة جوجل)» فوق وارفع نفس الصورة هناك، وهي هتقولك ده مرض إيه.</p>";}
+  else if(photos.length){h+="<h3>تم حفظ التشخيص بالصور ("+photos.length+" "+(photos.length===1?"صورة":"صور")+")</h3><p>التطبيق مش بيحلّل الصورة أوتوماتيك — قارن صورتك بصور أمراض المحصول في المكتبة فوق، ودوس على المرض اللي شكله قريب من صورتك.</p>";}
   else{h+="<h3>لا توجد مطابقة واضحة من الأعراض المكتوبة</h3><p>جرّب إضافة تفاصيل أكثر (لون البقع، مكانها على الورقة أو الساق، هل يوجد بودرة أو نمو أبيض؟)، أو أضف صورة، أو راجع الإرشاد الزراعي.</p>";}
   h+="<p><b>أمراض "+esc(c.name)+" الشائعة:</b></p><ul>"+c.diseases.map(d=>"<li><b>"+esc(d.n)+":</b> "+esc(d.s)+" — "+esc(d.t)+"</li>").join("")+"</ul>";
-  if(photos.length)h+="<p>تم حفظ "+photos.length+" "+(photos.length===1?"صورة":"صور")+" مع التشخيص (تُصدَّر مع النسخة الاحتياطية).</p>";
+  if(photos.length&&saveRes!=="slim")h+="<p>تم حفظ "+photos.length+" "+(photos.length===1?"صورة":"صور")+" مع التشخيص (تُصدَّر مع النسخة الاحتياطية).</p>";
+  if(saveRes==="slim")h+="<div class='warnbox'>⚠️ الصور كبيرة فلم تُحفظ على الجهاز — التشخيص محفوظ بدون الصور. جرّب صورًا أصغر أو صورة واحدة.</div>";
   h+="<p style='font-size:16px'>⚠️ التشخيص أولي. المبيدات والجرعات تُطابَق مع لجنة مبيدات الآفات الزراعية قبل الاستخدام.</p></div>";
   document.getElementById("diagResult").innerHTML=h;
 }
